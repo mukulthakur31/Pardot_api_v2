@@ -1,0 +1,184 @@
+/* Pardot-inspired Home Page Styles */
+.home-container {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #00396B 0%, #0176D3 50%, #1B96FF 100%);
+  font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.home-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.background-pattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255,255,255,0.05) 0%, transparent 50%);
+  background-size: 400px 400px;
+  animation: float 20s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(1deg); }
+}
+
+.home-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 480px;
+  width: 90%;
+  z-index: 1;
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 3rem;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  max-width: 480px;
+  width: 100%;
+}
+
+.brand-section {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #E5E5E5;
+}
+
+.brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #00396B, #0176D3);
+  border-radius: 20px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 24px rgba(1, 118, 211, 0.3);
+}
+
+.brand-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #00396B;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
+}
+
+.brand-subtitle {
+  color: #706E6B;
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 400;
+}
+
+.login-section {
+  text-align: center;
+}
+
+.login-info h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #181818;
+  margin: 0 0 0.75rem 0;
+}
+
+.login-info p {
+  color: #706E6B;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0 0 2rem 0;
+}
+
+.salesforce-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: #0176D3;
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(1, 118, 211, 0.3);
+  margin-bottom: 1.5rem;
+}
+
+.salesforce-login-btn:hover {
+  background: #014486;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(1, 118, 211, 0.4);
+}
+
+.salesforce-login-btn:active {
+  transform: translateY(0);
+}
+
+.security-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #706E6B;
+  font-size: 0.85rem;
+  padding: 0.75rem;
+  background: #F3F3F3;
+  border-radius: 6px;
+  border: 1px solid #E5E5E5;
+}
+
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .home-content {
+    padding: 2rem 1rem;
+  }
+  
+  .login-card {
+    padding: 2rem;
+  }
+  
+  .brand-title {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 1.5rem;
+  }
+  
+  .brand-icon {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .brand-title {
+    font-size: 1.5rem;
+  }
+}
