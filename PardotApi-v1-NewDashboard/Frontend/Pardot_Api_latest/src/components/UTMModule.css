@@ -1,0 +1,194 @@
+/* UTM Module specific styles - extends EmailModule.css */
+
+.rate-badge.missing {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.rate-badge.present {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.utm-field-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.utm-field-status.missing {
+  color: #dc2626;
+}
+
+.utm-field-status.present {
+  color: #16a34a;
+}
+
+.campaign-status-active {
+  background: #f0fdf4;
+  color: #16a34a;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid #bbf7d0;
+}
+
+.campaign-status-inactive {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid #fecaca;
+}
+
+.tab-navigation {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 1rem;
+}
+
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.2s;
+}
+
+.tab-button.active {
+  background: #3b82f6;
+  color: white;
+  font-weight: 600;
+}
+
+.tab-button:hover:not(.active) {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.utm-analysis-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.utm-summary-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.utm-summary-card.issues {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.utm-summary-card.clean {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.utm-summary-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.utm-summary-value.issues {
+  color: #f59e0b;
+}
+
+.utm-summary-value.clean {
+  color: #10b981;
+}
+
+.utm-summary-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.missing-fields-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.missing-field-tag {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  border: 1px solid #fecaca;
+}
+
+.campaign-engagement-filters {
+  display: flex;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.months-selector {
+  display: flex;
+  flex-direction: column;
+}
+
+.months-selector label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 0.5rem;
+}
+
+.months-selector select {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: white;
+}
+
+@media (max-width: 768px) {
+  .utm-analysis-summary {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .utm-summary-card {
+    padding: 1rem;
+  }
+  
+  .utm-summary-value {
+    font-size: 1.5rem;
+  }
+  
+  .campaign-engagement-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .tab-navigation {
+    flex-direction: column;
+  }
+  
+  .tab-button {
+    border-radius: 6px;
+  }
+}
