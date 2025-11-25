@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, send_file, g
 from services.pdf_service import (
     create_professional_pdf_report, create_form_pdf_report, 
-    create_prospect_pdf_report, create_comprehensive_summary_pdf
+    create_prospect_pdf_report, create_landing_page_pdf_report, create_comprehensive_summary_pdf
 )
 from services.email_service import get_email_stats
 from services.form_service import get_form_stats
@@ -35,6 +35,9 @@ def download_pdf():
         elif data_type == "prospects":
             buffer = create_prospect_pdf_report(data)
             filename = "prospect_health_report.pdf"
+        elif data_type == "landing_pages":
+            buffer = create_landing_page_pdf_report(data)
+            filename = "landing_pages_report.pdf"
         else:
             return jsonify({"error": "Invalid data type"}), 400
         

@@ -258,7 +258,7 @@ const FormsModule = () => {
               <div className="filter-group">
                 <label>Start Date</label>
                 <input 
-                  type="datetime-local" 
+                  type="date" 
                   value={filters.startDate}
                   onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
                 />
@@ -266,7 +266,7 @@ const FormsModule = () => {
               <div className="filter-group">
                 <label>End Date</label>
                 <input 
-                  type="datetime-local" 
+                  type="date" 
                   value={filters.endDate}
                   onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
                 />

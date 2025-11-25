@@ -158,19 +158,6 @@ def get_landing_page_stats(access_token, created_after=None, created_before=None
 
 
 
-def save_all_landing_page_stats_to_file(page_stats):
-    """Save all landing page stats to a single file"""
-    try:
-        filename = "landing_page_stats.json"
-        
-        with open(filename, 'w') as f:
-            json.dump(page_stats, f, indent=2)
-        
-        print(f"Saved stats for {len(page_stats)} landing pages to {filename}")
-    except Exception as e:
-        print(f"Error saving landing page stats: {str(e)}")
-
-
 def get_date_range_from_filter(filter_type):
     """Convert filter type to date range"""
     from datetime import datetime, timedelta
@@ -213,15 +200,3 @@ def get_date_range_from_filter(filter_type):
     return start.isoformat(), end.isoformat()
 
 
-def get_filtered_landing_page_stats(access_token, filter_type=None, start_date=None, end_date=None):
-    """Get filtered landing page stats with date filtering"""
-    try:
-        # Convert filter type to date range if provided
-        if filter_type and not start_date and not end_date:
-            start_date, end_date = get_date_range_from_filter(filter_type)
-        
-        # Fetch fresh data with date filters
-        return get_landing_page_stats(access_token, start_date, end_date)
-    except Exception as e:
-        print(f"Error in get_filtered_landing_page_stats: {str(e)}")
-        raise e
