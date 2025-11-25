@@ -124,6 +124,134 @@ def create_form_pdf_report(form_stats):
     buffer.seek(0)
     return buffer
 
+def create_landing_page_pdf_report(landing_page_data):
+    """Generate PDF report for landing page statistics"""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.75*inch, bottomMargin=0.75*inch, leftMargin=0.75*inch, rightMargin=0.75*inch)
+    
+    content = []
+    styles = getSampleStyleSheet()
+    
+    # Header
+    header_style = ParagraphStyle('LandingPageHeader', parent=styles['Heading1'], 
+                                fontSize=20, spaceAfter=16, alignment=1, 
+                                textColor=colors.HexColor('#1f2937'), fontName='Helvetica-Bold')
+    
+    content.append(Paragraph("🚀 LANDING PAGES PERFORMANCE REPORT", header_style))
+    content.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", 
+                           ParagraphStyle('Subtitle', parent=styles['Normal'], fontSize=12, spaceAfter=16, alignment=1, textColor=colors.HexColor('#6b7280'))))
+    
+    # Summary
+    summary = landing_page_data.get('summary', {})
+    active_pages = landing_page_data.get('active_pages', {}).get('pages', [])
+    inactive_pages = landing_page_data.get('inactive_pages', {}).get('pages', [])
+    
+    summary_data = [
+        ['📊 LANDING PAGES SUMMARY', 'VALUE'],
+        ['Total Pages', f"{summary.get('total_pages', 0):,}"],
+        ['Active Pages', f"{len(active_pages):,}"],
+        ['Inactive Pages', f"{len(inactive_pages):,}"],
+        ['Active Rate', f"{summary.get('active_percentage', 0):.1f}%"],
+        ['Total Activities', f"{summary.get('total_activities', 0):,}"]
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[3.2*inch, 1.8*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#475569')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6)
+    ]))
+    
+    content.append(summary_table)
+    content.append(Spacer(1, 0.3*inch))
+    
+    # Active pages table
+    if active_pages:
+        content.append(Paragraph("✅ ACTIVE LANDING PAGES", 
+                               ParagraphStyle('SectionHeader', parent=styles['Heading2'], fontSize=16, spaceAfter=12, textColor=colors.HexColor('#1f2937'))))
+        
+        table_data = [['Page Name', 'Views', 'Submissions', 'Clicks', 'Total Activities']]
+        
+        for page in active_pages[:15]:  # Limit to first 15 pages
+            name = page.get('name', 'Unknown')[:25] + '...' if len(page.get('name', '')) > 25 else page.get('name', 'Unknown')
+            
+            table_data.append([
+                name,
+                f"{page.get('views', 0):,}",
+                f"{page.get('submissions', 0):,}",
+                f"{page.get('clicks', 0):,}",
+                f"{page.get('total_activities', 0):,}"
+            ])
+        
+        active_table = Table(table_data, colWidths=[2.5*inch, 0.8*inch, 0.9*inch, 0.8*inch, 1*inch])
+        active_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10b981')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4)
+        ]))
+        
+        content.append(active_table)
+        content.append(Spacer(1, 0.3*inch))
+    
+    # Inactive pages table
+    if inactive_pages:
+        content.append(Paragraph("⚠️ INACTIVE LANDING PAGES", 
+                               ParagraphStyle('SectionHeader', parent=styles['Heading2'], fontSize=16, spaceAfter=12, textColor=colors.HexColor('#1f2937'))))
+        
+        table_data = [['Page Name', 'Views', 'Submissions', 'Last Activity']]
+        
+        for page in inactive_pages[:10]:  # Limit to first 10 pages
+            name = page.get('name', 'Unknown')[:30] + '...' if len(page.get('name', '')) > 30 else page.get('name', 'Unknown')
+            last_activity = page.get('last_activity')
+            last_activity_str = datetime.fromisoformat(last_activity.replace('Z', '+00:00')).strftime('%Y-%m-%d') if last_activity else 'None'
+            
+            table_data.append([
+                name,
+                f"{page.get('views', 0):,}",
+                f"{page.get('submissions', 0):,}",
+                last_activity_str
+            ])
+        
+        inactive_table = Table(table_data, colWidths=[2.8*inch, 0.8*inch, 0.9*inch, 1.5*inch])
+        inactive_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f59e0b')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#fef3c7')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4)
+        ]))
+        
+        content.append(inactive_table)
+    
+    doc.build(content)
+    buffer.seek(0)
+    return buffer
+
 def create_prospect_pdf_report(health_data):
     """Generate PDF report for prospect health analysis"""
     buffer = BytesIO()
