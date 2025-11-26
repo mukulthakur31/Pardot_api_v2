@@ -16,6 +16,9 @@ const Dashboard = () => {
   const [pardotConnected, setPardotConnected] = useState(false)
   const [googleConnected, setGoogleConnected] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [generatingReport, setGeneratingReport] = useState(false)
+  const [reportSuccess, setReportSuccess] = useState(false)
+
   const navigate = useNavigate()
   const location = useLocation()
   
@@ -114,6 +117,43 @@ const Dashboard = () => {
     }
   }
 
+  const generateFullReport = async () => {
+    setGeneratingReport(true)
+    try {
+      const response = await fetch('http://localhost:4001/download-summary-pdf', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate report')
+      }
+      
+      // Create blob and download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `pardot-comprehensive-report-${new Date().toISOString().split('T')[0]}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      // Show success message
+      setReportSuccess(true)
+      setTimeout(() => setReportSuccess(false), 3000)
+    } catch (error) {
+      console.error('Error generating report:', error)
+      alert('Failed to generate report. Please try again.')
+    } finally {
+      setGeneratingReport(false)
+    }
+  }
+
   // Context value
   const googleAuthValue = {
     googleAuth: googleConnected,
@@ -167,8 +207,29 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Connection Status & Logout */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {/* Connection Status & Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
+          {/* Success Message */}
+          {reportSuccess && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              right: '0',
+              marginTop: '0.5rem',
+              background: '#10B981',
+              color: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+              zIndex: 1000,
+              whiteSpace: 'nowrap'
+            }}>
+              ✅ Report generated successfully!
+            </div>
+          )}
+
           {/* Pardot Status */}
           <div style={{
             display: 'flex',
@@ -284,6 +345,68 @@ const Dashboard = () => {
                 {module.name}
               </button>
             ))}
+            
+            {/* Sidebar Full Report Button */}
+            <div style={{ marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid #E5E5E5' }}>
+              <button
+                onClick={generateFullReport}
+                disabled={generatingReport || !pardotConnected}
+                style={{
+                  width: '100%',
+                  padding: '0.875rem 1rem',
+                  margin: '0.25rem 0',
+                  border: 'none',
+                  borderRadius: '8px',
+                  background: generatingReport ? '#9CA3AF' : 'linear-gradient(135deg, #7C3AED, #A855F7)',
+                  color: 'white',
+                  cursor: generatingReport || !pardotConnected ? 'not-allowed' : 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  textAlign: 'center',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 4px rgba(124, 58, 237, 0.2)'
+                }}
+                onMouseOver={(e) => {
+                  if (!generatingReport && pardotConnected) {
+                    e.target.style.transform = 'translateY(-1px)'
+                    e.target.style.boxShadow = '0 4px 8px rgba(124, 58, 237, 0.3)'
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!generatingReport && pardotConnected) {
+                    e.target.style.transform = 'translateY(0px)'
+                    e.target.style.boxShadow = '0 2px 4px rgba(124, 58, 237, 0.2)'
+                  }
+                }}
+              >
+                {generatingReport ? (
+                  <>
+                    <div style={{
+                      width: '14px',
+                      height: '14px',
+                      border: '2px solid #ffffff',
+                      borderTop: '2px solid transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                      display: 'inline-block',
+                      marginRight: '0.5rem'
+                    }}></div>
+                    Generating...
+                  </>
+                ) : (
+                  '📊 Generate Full Report'
+                )}
+              </button>
+              <p style={{
+                fontSize: '0.7rem',
+                color: '#9CA3AF',
+                textAlign: 'center',
+                margin: '0.5rem 0 0 0',
+                lineHeight: 1.3
+              }}>
+                {!pardotConnected ? 'Connect to Salesforce first' : 'Comprehensive PDF with all analytics'}
+              </p>
+            </div>
           </nav>
         </aside>
 
