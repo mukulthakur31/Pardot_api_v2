@@ -1,7 +1,10 @@
 from flask import Blueprint, jsonify, g
-from services.engagement_service import get_engagement_programs_analysis, get_engagement_programs_performance
+import logging
+from services.engagement_service import get_engagement_programs_analysis, EngagementServiceError
 from middleware.auth_middleware import require_auth
 from cache import get_cached_data, set_cached_data
+
+logger = logging.getLogger(__name__)
 
 engagement_bp = Blueprint('engagement', __name__)
 
@@ -9,22 +12,18 @@ engagement_bp = Blueprint('engagement', __name__)
 @require_auth
 def get_engagement_programs_analysis_route():
     try:
-        analysis_data = get_engagement_programs_analysis(g.access_token)
-        set_cached_data(f"engagement:{g.access_token[:20]}", analysis_data, ttl=1800)
-        return jsonify(analysis_data)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@engagement_bp.route("/get-engagement-programs-performance", methods=["GET"])
-@require_auth
-def get_engagement_programs_performance_route():
-    try:
-        cached_data = get_cached_data(f"engagement:{g.access_token[:20]}")
+        cache_key = f"engagement_programs:{g.access_token[:20]}"
+        cached_data = get_cached_data(cache_key)
+        
         if cached_data:
-            performance_data = cached_data
-        else:
-            performance_data = get_engagement_programs_performance(g.access_token)
-            set_cached_data(f"engagement:{g.access_token[:20]}", performance_data, ttl=1800)
-        return jsonify(performance_data)
+            return jsonify(cached_data)
+        
+        engagement_data = get_engagement_programs_analysis(g.access_token)
+        set_cached_data(cache_key, engagement_data, ttl=1800)
+        return jsonify(engagement_data)
+    except EngagementServiceError as e:
+        logger.error(f"Engagement service error: {str(e)}")
+        return jsonify({"error": "Failed to fetch engagement programs", "details": str(e)}), 500
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Unexpected error in engagement programs: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500

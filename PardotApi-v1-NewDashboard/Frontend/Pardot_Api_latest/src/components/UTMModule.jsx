@@ -6,7 +6,7 @@ import './UTMModule.css'
 const UTMModule = () => {
   const [utmData, setUtmData] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [exporting, setExporting] = useState({ sheets: false, pdf: false })
+  const [exporting, setExporting] = useState({ sheets: false })
   const [error, setError] = useState('')
   const { googleAuth, handleGoogleAuth } = useGoogleAuth()
 
@@ -42,7 +42,7 @@ const UTMModule = () => {
       return
     }
 
-    setExporting(prev => ({ ...prev, sheets: true }))
+    setExporting({ sheets: true })
     try {
       const exportData = utmData ? utmData.export_data : []
 
@@ -65,42 +65,11 @@ const UTMModule = () => {
     } catch (error) {
       setError('Export failed: ' + error.message)
     } finally {
-      setExporting(prev => ({ ...prev, sheets: false }))
+      setExporting({ sheets: false })
     }
   }
 
-  const downloadPDF = async () => {
-    setExporting(prev => ({ ...prev, pdf: true }))
-    try {
-      const response = await fetch('http://localhost:4001/download-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          data_type: 'utm_analysis',
-          data: utmData
-        })
-      })
 
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `utm-analysis-report-${new Date().toISOString().split('T')[0]}.pdf`
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-      } else {
-        setError('PDF download failed')
-      }
-    } catch (error) {
-      setError('PDF download failed: ' + error.message)
-    } finally {
-      setExporting(prev => ({ ...prev, pdf: false }))
-    }
-  }
 
   return (
     <div className="email-module">
@@ -145,13 +114,6 @@ const UTMModule = () => {
                 >
                   {exporting.sheets ? '🔄 Exporting...' : '📊 Export to Sheets'}
                   {!googleAuth && <span className="auth-required">*Auth Required</span>}
-                </button>
-                <button 
-                  className="export-btn pdf"
-                  onClick={downloadPDF}
-                  disabled={exporting.pdf}
-                >
-                  {exporting.pdf ? '🔄 Generating...' : '📄 Download PDF'}
                 </button>
               </div>
             </div>

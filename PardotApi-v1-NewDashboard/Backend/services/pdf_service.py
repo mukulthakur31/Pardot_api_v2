@@ -124,6 +124,180 @@ def create_form_pdf_report(form_stats):
     buffer.seek(0)
     return buffer
 
+def create_utm_pdf_report(utm_data):
+    """Generate PDF report for UTM analysis"""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.75*inch, bottomMargin=0.75*inch, leftMargin=0.75*inch, rightMargin=0.75*inch)
+    
+    content = []
+    styles = getSampleStyleSheet()
+    
+    # Header
+    header_style = ParagraphStyle('UTMHeader', parent=styles['Heading1'], 
+                                fontSize=20, spaceAfter=16, alignment=1, 
+                                textColor=colors.HexColor('#1f2937'), fontName='Helvetica-Bold')
+    
+    content.append(Paragraph("📊 UTM TRACKING ANALYSIS REPORT", header_style))
+    content.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", 
+                           ParagraphStyle('Subtitle', parent=styles['Normal'], fontSize=12, spaceAfter=16, alignment=1, textColor=colors.HexColor('#6b7280'))))
+    
+    # UTM Analysis Summary
+    utm_analysis = utm_data.get('utm_analysis', {})
+    
+    summary_data = [
+        ['📊 UTM TRACKING SUMMARY', 'VALUE'],
+        ['Total Prospects Analyzed', f"{utm_analysis.get('total_prospects_analyzed', 0):,}"],
+        ['Prospects with UTM Data', f"{utm_analysis.get('prospects_with_utm_data', 0):,}"],
+        ['UTM Coverage', f"{utm_analysis.get('utm_coverage_percentage', 0):.1f}%"],
+        ['UTM Issues Found', f"{utm_analysis.get('prospects_with_utm_issues', 0):,}"],
+        ['Data Quality Score', f"{utm_analysis.get('data_quality_score', 0):.1f}%"]
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[3.2*inch, 1.8*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#475569')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6)
+    ]))
+    
+    content.append(summary_table)
+    content.append(Spacer(1, 0.3*inch))
+    
+    # UTM Parameters Analysis
+    utm_parameters = utm_data.get('utm_parameters_analysis', {})
+    if utm_parameters:
+        content.append(Paragraph("🏷️ UTM PARAMETERS ANALYSIS", 
+                               ParagraphStyle('SectionHeader', parent=styles['Heading2'], fontSize=16, spaceAfter=12, textColor=colors.HexColor('#1f2937'))))
+        
+        param_data = [['Parameter', 'Usage Count', 'Coverage %']]
+        
+        for param, data in utm_parameters.items():
+            if isinstance(data, dict):
+                usage = data.get('usage_count', 0)
+                coverage = data.get('coverage_percentage', 0)
+                param_data.append([param.upper(), f"{usage:,}", f"{coverage:.1f}%"])
+        
+        param_table = Table(param_data, colWidths=[2*inch, 1.5*inch, 1.5*inch])
+        param_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3b82f6')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#dbeafe')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4)
+        ]))
+        
+        content.append(param_table)
+    
+    doc.build(content)
+    buffer.seek(0)
+    return buffer
+
+def create_engagement_pdf_report(engagement_data):
+    """Generate PDF report for engagement programs"""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.75*inch, bottomMargin=0.75*inch, leftMargin=0.75*inch, rightMargin=0.75*inch)
+    
+    content = []
+    styles = getSampleStyleSheet()
+    
+    # Header
+    header_style = ParagraphStyle('EngagementHeader', parent=styles['Heading1'], 
+                                fontSize=20, spaceAfter=16, alignment=1, 
+                                textColor=colors.HexColor('#1f2937'), fontName='Helvetica-Bold')
+    
+    content.append(Paragraph("🎯 ENGAGEMENT PROGRAMS REPORT", header_style))
+    content.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", 
+                           ParagraphStyle('Subtitle', parent=styles['Normal'], fontSize=12, spaceAfter=16, alignment=1, textColor=colors.HexColor('#6b7280'))))
+    
+    # Summary
+    summary = engagement_data.get('summary', {})
+    
+    summary_data = [
+        ['📊 ENGAGEMENT PROGRAMS SUMMARY', 'VALUE'],
+        ['Total Programs', f"{summary.get('total_programs', 0):,}"],
+        ['Active Programs', f"{summary.get('active_count', 0):,}"],
+        ['Paused Programs', f"{summary.get('paused_count', 0):,}"],
+        ['Inactive Programs', f"{summary.get('inactive_count', 0):,}"],
+        ['Deleted Programs', f"{summary.get('deleted_count', 0):,}"]
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[3.2*inch, 1.8*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#475569')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6)
+    ]))
+    
+    content.append(summary_table)
+    content.append(Spacer(1, 0.3*inch))
+    
+    # Active programs table
+    active_programs = engagement_data.get('active_programs', [])
+    if active_programs:
+        content.append(Paragraph("✅ ACTIVE ENGAGEMENT PROGRAMS", 
+                               ParagraphStyle('SectionHeader', parent=styles['Heading2'], fontSize=16, spaceAfter=12, textColor=colors.HexColor('#1f2937'))))
+        
+        table_data = [['Program Name', 'Status', 'Created Date']]
+        
+        for program in active_programs[:15]:  # Limit to first 15 programs
+            name = program.get('name', 'Unknown')[:40] + '...' if len(program.get('name', '')) > 40 else program.get('name', 'Unknown')
+            status = program.get('status', 'Unknown')
+            created_date = program.get('createdAt', '')
+            if created_date:
+                try:
+                    created_date = datetime.fromisoformat(created_date.replace('Z', '+00:00')).strftime('%Y-%m-%d')
+                except:
+                    created_date = 'Unknown'
+            
+            table_data.append([name, status, created_date])
+        
+        active_table = Table(table_data, colWidths=[3.5*inch, 1*inch, 1.5*inch])
+        active_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10b981')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4)
+        ]))
+        
+        content.append(active_table)
+    
+    doc.build(content)
+    buffer.seek(0)
+    return buffer
+
 def create_landing_page_pdf_report(landing_page_data):
     """Generate PDF report for landing page statistics"""
     buffer = BytesIO()
@@ -488,53 +662,146 @@ def create_insights_section(stats_list):
     return content
 
 def create_comprehensive_summary_pdf(email_stats, form_stats, prospect_health, landing_page_stats=None, engagement_programs=None, utm_analysis=None):
-    """Generate sectioned Pardot report with individual data summaries"""
+    """Generate vibrant, modern Pardot report with creative design"""
     try:
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch, leftMargin=0.5*inch, rightMargin=0.5*inch)
+        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch, leftMargin=0.6*inch, rightMargin=0.6*inch)
         
         content = []
         styles = getSampleStyleSheet()
         
-        title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=24, spaceAfter=20, alignment=1, textColor=colors.HexColor('#1f2937'), fontName='Helvetica-Bold')
-        section_style = ParagraphStyle('Section', parent=styles['Heading2'], fontSize=18, spaceAfter=15, textColor=colors.HexColor('#3b82f6'), fontName='Helvetica-Bold')
-        metric_style = ParagraphStyle('Metric', parent=styles['Normal'], fontSize=12, spaceAfter=8, textColor=colors.HexColor('#059669'), fontName='Helvetica-Bold')
+        # Modern vibrant color palette
+        title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=28, spaceAfter=20, alignment=1, textColor=colors.HexColor('#6366f1'), fontName='Helvetica-Bold')
+        section_style = ParagraphStyle('Section', parent=styles['Heading2'], fontSize=20, spaceAfter=15, textColor=colors.HexColor('#ec4899'), fontName='Helvetica-Bold')
+        metric_style = ParagraphStyle('Metric', parent=styles['Normal'], fontSize=13, spaceAfter=10, textColor=colors.HexColor('#10b981'), fontName='Helvetica-Bold')
         
-        # COVER PAGE
-        content.append(Spacer(1, 1.5*inch))
-        content.append(Paragraph("📊 PARDOT PERFORMANCE REPORT", title_style))
+        # VIBRANT COVER PAGE
+        content.append(Spacer(1, 0.5*inch))
+        
+        # Colorful Header with Gradient Effect
+        header_bg = Table([[""]])
+        header_bg.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#6366f1'))
+        ]))
+        content.append(header_bg)
+        
+        content.append(Spacer(1, -1.3*inch))  # Overlay content
+        
+        # Modern Company Header
+        company_header = Paragraph("<font color='white'><b>🚀 PARDOT ANALYTICS PLATFORM</b></font>", 
+                                 ParagraphStyle('CompanyHeader', parent=styles['Normal'], fontSize=20, alignment=1, fontName='Helvetica-Bold'))
+        content.append(company_header)
+        
+        content.append(Spacer(1, 0.2*inch))
+        date_header = Paragraph(f"<font color='white'>📅 Generated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</font>", 
+                              ParagraphStyle('DateHeader', parent=styles['Normal'], fontSize=12, alignment=1))
+        content.append(date_header)
+        
+        content.append(Spacer(1, 1*inch))
+        
+        # Dynamic Title with Emojis
+        content.append(Paragraph("🎯 MARKETING PERFORMANCE DASHBOARD", title_style))
         content.append(Spacer(1, 0.3*inch))
-        content.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y')}", ParagraphStyle('Date', parent=styles['Normal'], fontSize=14, alignment=1, textColor=colors.HexColor('#6b7280'))))
+        
+        # Colorful Executive Summary
+        summary_text = "🔥 <b>Executive Insights:</b> This dynamic report showcases your marketing automation performance across all channels. Discover actionable insights, identify growth opportunities, and optimize your marketing ROI with data-driven recommendations."
+        
+        summary_para = Paragraph(summary_text, ParagraphStyle('ExecSummary', parent=styles['Normal'], fontSize=14, textColor=colors.HexColor('#1f2937'), leading=20, alignment=1))
+        
+        summary_table = Table([[summary_para]], colWidths=[6.5*inch])
+        summary_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f0f9ff')),
+            ('BORDER', (0, 0), (-1, -1), 3, colors.HexColor('#0ea5e9')),
+            ('ROUNDEDCORNERS', [15, 15, 15, 15]),
+            ('TOPPADDING', (0, 0), (-1, -1), 25),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 25),
+            ('LEFTPADDING', (0, 0), (-1, -1), 25),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 25)
+        ]))
+        
+        content.append(summary_table)
         content.append(PageBreak())
         
-        # EMAIL CAMPAIGNS SECTION
+        # VIBRANT EMAIL CAMPAIGNS SECTION
         if email_stats:
-            content.append(Paragraph("📧 EMAIL CAMPAIGNS", section_style))
-            content.append(Spacer(1, 0.2*inch))
+            # Section Header with Background
+            email_header = Table([[Paragraph("📧 EMAIL CAMPAIGNS PERFORMANCE", section_style)]], colWidths=[7*inch])
+            email_header.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#fef3c7')),
+                ('BORDER', (0, 0), (-1, -1), 2, colors.HexColor('#f59e0b')),
+                ('TOPPADDING', (0, 0), (-1, -1), 15),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 15),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER')
+            ]))
+            content.append(email_header)
+            content.append(Spacer(1, 0.3*inch))
             
             email_metrics = calculate_email_metrics(email_stats)
-            content.append(Paragraph(f"Total Campaigns: {email_metrics['total_campaigns']:,}", metric_style))
-            content.append(Paragraph(f"Emails Sent: {email_metrics['total_sent']:,}", metric_style))
-            content.append(Paragraph(f"Open Rate: {email_metrics['open_rate']:.1f}%", metric_style))
-            content.append(Paragraph(f"Click Rate: {email_metrics['click_rate']:.1f}%", metric_style))
             
-            content.append(Spacer(1, 0.2*inch))
-            content.append(create_fast_email_chart(email_metrics['total_sent'], email_metrics['total_opens'], email_metrics['total_clicks']))
+            # Colorful Metrics Cards
+            metrics_data = [
+                [Paragraph(f"🎯 <b>{email_metrics['total_campaigns']:,}</b><br/>Total Campaigns", ParagraphStyle('Card', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.HexColor('#1f2937'))),
+                 Paragraph(f"📤 <b>{email_metrics['total_sent']:,}</b><br/>Emails Sent", ParagraphStyle('Card', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.HexColor('#1f2937'))),
+                 Paragraph(f"👀 <b>{email_metrics['open_rate']:.1f}%</b><br/>Open Rate", ParagraphStyle('Card', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.HexColor('#1f2937'))),
+                 Paragraph(f"🖱️ <b>{email_metrics['click_rate']:.1f}%</b><br/>Click Rate", ParagraphStyle('Card', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.HexColor('#1f2937')))]
+            ]
+            
+            metrics_table = Table(metrics_data, colWidths=[1.6*inch, 1.6*inch, 1.6*inch, 1.6*inch])
+            metrics_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, 0), colors.HexColor('#dbeafe')),
+                ('BACKGROUND', (1, 0), (1, 0), colors.HexColor('#dcfce7')),
+                ('BACKGROUND', (2, 0), (2, 0), colors.HexColor('#fef3c7')),
+                ('BACKGROUND', (3, 0), (3, 0), colors.HexColor('#fce7f3')),
+                ('BORDER', (0, 0), (-1, -1), 2, colors.HexColor('#e5e7eb')),
+                ('TOPPADDING', (0, 0), (-1, -1), 20),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 20),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER')
+            ]))
+            
+            content.append(metrics_table)
+            content.append(Spacer(1, 0.4*inch))
+            content.append(create_modern_email_chart(email_metrics['total_sent'], email_metrics['total_opens'], email_metrics['total_clicks']))
             content.append(PageBreak())
         
-        # FORMS SECTION
+        # VIBRANT FORMS SECTION
         if form_stats:
-            content.append(Paragraph("📝 FORMS", section_style))
-            content.append(Spacer(1, 0.2*inch))
+            # Section Header
+            form_header = Table([[Paragraph("📝 FORM CONVERSION ANALYTICS", section_style)]], colWidths=[7*inch])
+            form_header.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#ecfdf5')),
+                ('BORDER', (0, 0), (-1, -1), 2, colors.HexColor('#10b981')),
+                ('TOPPADDING', (0, 0), (-1, -1), 15),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 15),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER')
+            ]))
+            content.append(form_header)
+            content.append(Spacer(1, 0.3*inch))
             
             form_metrics = calculate_form_metrics(form_stats)
-            content.append(Paragraph(f"Total Forms: {form_metrics['total_forms']:,}", metric_style))
-            content.append(Paragraph(f"Form Views: {form_metrics['total_views']:,}", metric_style))
-            content.append(Paragraph(f"Submissions: {form_metrics['total_submissions']:,}", metric_style))
-            content.append(Paragraph(f"Conversion Rate: {form_metrics['conversion_rate']:.1f}%", metric_style))
             
-            content.append(Spacer(1, 0.2*inch))
-            content.append(create_fast_form_chart(form_metrics['total_views'], form_metrics['total_submissions']))
+            # Colorful Form Metrics
+            form_metrics_data = [
+                [Paragraph(f"📋 <b>{form_metrics['total_forms']:,}</b><br/>Active Forms", ParagraphStyle('FormCard', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.HexColor('#1f2937'))),
+                 Paragraph(f"👀 <b>{form_metrics['total_views']:,}</b><br/>Total Views", ParagraphStyle('FormCard', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.HexColor('#1f2937'))),
+                 Paragraph(f"✅ <b>{form_metrics['total_submissions']:,}</b><br/>Submissions", ParagraphStyle('FormCard', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.HexColor('#1f2937'))),
+                 Paragraph(f"🎯 <b>{form_metrics['conversion_rate']:.1f}%</b><br/>Conversion Rate", ParagraphStyle('FormCard', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.HexColor('#1f2937')))]
+            ]
+            
+            form_table = Table(form_metrics_data, colWidths=[1.6*inch, 1.6*inch, 1.6*inch, 1.6*inch])
+            form_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, 0), colors.HexColor('#e0f2fe')),
+                ('BACKGROUND', (1, 0), (1, 0), colors.HexColor('#f3e8ff')),
+                ('BACKGROUND', (2, 0), (2, 0), colors.HexColor('#ecfdf5')),
+                ('BACKGROUND', (3, 0), (3, 0), colors.HexColor('#fff7ed')),
+                ('BORDER', (0, 0), (-1, -1), 2, colors.HexColor('#e5e7eb')),
+                ('TOPPADDING', (0, 0), (-1, -1), 20),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 20),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER')
+            ]))
+            
+            content.append(form_table)
+            content.append(Spacer(1, 0.3*inch))
+            content.append(create_modern_form_chart(form_metrics['total_views'], form_metrics['total_submissions']))
             content.append(PageBreak())
         
         # LANDING PAGES SECTION
@@ -555,19 +822,45 @@ def create_comprehensive_summary_pdf(email_stats, form_stats, prospect_health, l
             content.append(create_fast_landing_chart(active_count, inactive_count))
             content.append(PageBreak())
         
-        # PROSPECTS SECTION
+        # VIBRANT PROSPECTS SECTION
         if prospect_health:
-            content.append(Paragraph("👥 PROSPECTS", section_style))
-            content.append(Spacer(1, 0.2*inch))
+            # Section Header
+            prospect_header = Table([[Paragraph("👥 PROSPECT DATABASE HEALTH", section_style)]], colWidths=[7*inch])
+            prospect_header.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#fef2f2')),
+                ('BORDER', (0, 0), (-1, -1), 2, colors.HexColor('#ef4444')),
+                ('TOPPADDING', (0, 0), (-1, -1), 15),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 15),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER')
+            ]))
+            content.append(prospect_header)
+            content.append(Spacer(1, 0.3*inch))
             
             prospect_metrics = calculate_prospect_metrics(prospect_health)
-            content.append(Paragraph(f"Total Prospects: {prospect_metrics['total_prospects']:,}", metric_style))
-            content.append(Paragraph(f"Healthy Records: {prospect_metrics['healthy']:,}", metric_style))
-            content.append(Paragraph(f"Issues Found: {prospect_metrics['issues_count']:,}", metric_style))
-            content.append(Paragraph(f"Health Score: {prospect_metrics['health_score']:.1f}%", metric_style))
             
-            content.append(Spacer(1, 0.2*inch))
-            content.append(create_fast_prospect_chart(prospect_metrics['healthy'], prospect_metrics['issues_count']))
+            # Colorful Prospect Metrics
+            prospect_data = [
+                [Paragraph(f"📊 <b>{prospect_metrics['total_prospects']:,}</b><br/>Total Prospects", ParagraphStyle('ProspectCard', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.HexColor('#1f2937'))),
+                 Paragraph(f"✅ <b>{prospect_metrics['healthy']:,}</b><br/>Healthy Records", ParagraphStyle('ProspectCard', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.HexColor('#1f2937'))),
+                 Paragraph(f"⚠️ <b>{prospect_metrics['issues_count']:,}</b><br/>Issues Found", ParagraphStyle('ProspectCard', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.HexColor('#1f2937'))),
+                 Paragraph(f"🎯 <b>{prospect_metrics['health_score']:.1f}%</b><br/>Health Score", ParagraphStyle('ProspectCard', parent=styles['Normal'], fontSize=12, alignment=1, textColor=colors.HexColor('#1f2937')))]
+            ]
+            
+            prospect_table = Table(prospect_data, colWidths=[1.6*inch, 1.6*inch, 1.6*inch, 1.6*inch])
+            prospect_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, 0), colors.HexColor('#e0f2fe')),
+                ('BACKGROUND', (1, 0), (1, 0), colors.HexColor('#ecfdf5')),
+                ('BACKGROUND', (2, 0), (2, 0), colors.HexColor('#fef3c7')),
+                ('BACKGROUND', (3, 0), (3, 0), colors.HexColor('#f3e8ff')),
+                ('BORDER', (0, 0), (-1, -1), 2, colors.HexColor('#e5e7eb')),
+                ('TOPPADDING', (0, 0), (-1, -1), 20),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 20),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER')
+            ]))
+            
+            content.append(prospect_table)
+            content.append(Spacer(1, 0.3*inch))
+            content.append(create_modern_prospect_chart(prospect_metrics['healthy'], prospect_metrics['issues_count']))
             content.append(PageBreak())
         
         # ENGAGEMENT PROGRAMS SECTION
@@ -603,21 +896,54 @@ def create_comprehensive_summary_pdf(email_stats, form_stats, prospect_health, l
             content.append(create_fast_utm_chart(total_analyzed - utm_issues, utm_issues))
             content.append(PageBreak())
         
-        # RECOMMENDATIONS SECTION
-        content.append(Paragraph("💡 RECOMMENDATIONS", section_style))
+        # VIBRANT RECOMMENDATIONS SECTION
+        rec_header = Table([[Paragraph("💡 STRATEGIC RECOMMENDATIONS", section_style)]], colWidths=[7*inch])
+        rec_header.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f3e8ff')),
+            ('BORDER', (0, 0), (-1, -1), 2, colors.HexColor('#a855f7')),
+            ('TOPPADDING', (0, 0), (-1, -1), 15),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 15),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER')
+        ]))
+        content.append(rec_header)
+        content.append(Spacer(1, 0.3*inch))
+        
+        # Colorful Priority Boxes
+        high_priority_box = Table([[Paragraph("🔥 <b>IMMEDIATE ACTION REQUIRED</b><br/><br/>• Implement A/B testing for email subject lines<br/>• Clean up duplicate prospect records<br/>• Fix form conversion bottlenecks", ParagraphStyle('HighPriority', parent=styles['Normal'], fontSize=11, textColor=colors.HexColor('#1f2937'), leading=16))]], colWidths=[7*inch])
+        high_priority_box.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#fee2e2')),
+            ('BORDER', (0, 0), (-1, -1), 3, colors.HexColor('#dc2626')),
+            ('TOPPADDING', (0, 0), (-1, -1), 20),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 20),
+            ('LEFTPADDING', (0, 0), (-1, -1), 20),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 20)
+        ]))
+        
+        content.append(high_priority_box)
         content.append(Spacer(1, 0.2*inch))
         
-        recommendations = [
-            "📧 Implement A/B testing for email subject lines",
-            "📝 Optimize form fields to increase conversions", 
-            "🏥 Clean up duplicate and inactive prospect records",
-            "🚀 Review landing page performance and optimize",
-            "📊 Standardize UTM parameter usage",
-            "🎯 Restart paused engagement programs"
-        ]
+        medium_priority_box = Table([[Paragraph("📊 <b>STRATEGIC IMPROVEMENTS</b><br/><br/>• Optimize landing page performance<br/>• Standardize UTM tracking parameters<br/>• Enhance engagement program effectiveness", ParagraphStyle('MediumPriority', parent=styles['Normal'], fontSize=11, textColor=colors.HexColor('#1f2937'), leading=16))]], colWidths=[7*inch])
+        medium_priority_box.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#ecfdf5')),
+            ('BORDER', (0, 0), (-1, -1), 3, colors.HexColor('#10b981')),
+            ('TOPPADDING', (0, 0), (-1, -1), 20),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 20),
+            ('LEFTPADDING', (0, 0), (-1, -1), 20),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 20)
+        ]))
         
-        for rec in recommendations:
-            content.append(Paragraph(rec, ParagraphStyle('Rec', parent=styles['Normal'], fontSize=12, spaceAfter=8, leftIndent=20)))
+        content.append(medium_priority_box)
+        
+        # Modern Footer
+        content.append(Spacer(1, 0.5*inch))
+        footer_box = Table([[Paragraph("🚀 <i>Generated by Pardot Analytics Platform - Your Marketing Intelligence Partner</i>", ParagraphStyle('Footer', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#6b7280'), alignment=1))]], colWidths=[7*inch])
+        footer_box.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f8fafc')),
+            ('BORDER', (0, 0), (-1, -1), 1, colors.HexColor('#e2e8f0')),
+            ('TOPPADDING', (0, 0), (-1, -1), 15),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 15)
+        ]))
+        content.append(footer_box)
         
         doc.build(content)
         buffer.seek(0)
@@ -725,87 +1051,133 @@ def create_executive_metrics_table(email_stats, form_stats, prospect_health, lan
     
     return summary_table
 
-def create_fast_email_chart(sent, opens, clicks):
-    """Create simplified email performance chart"""
-    drawing = Drawing(500, 200)
+def create_modern_email_chart(sent, opens, clicks):
+    """Create vibrant email performance chart with proper spacing"""
+    drawing = Drawing(500, 250)
+    
+    # Background
+    from reportlab.graphics.shapes import Rect, String
+    bg = Rect(0, 0, 500, 250, fillColor=colors.HexColor('#f8fafc'), strokeColor=colors.HexColor('#e2e8f0'))
+    drawing.add(bg)
+    
     chart = VerticalBarChart()
-    chart.x = 60
-    chart.y = 50
-    chart.height = 120
-    chart.width = 380
+    chart.x = 80
+    chart.y = 60
+    chart.height = 140
+    chart.width = 340
     
     chart.data = [[sent, opens, clicks]]
-    chart.categoryAxis.categoryNames = ['Sent', 'Opens', 'Clicks']
-    chart.categoryAxis.labels.fontSize = 10
+    chart.categoryAxis.categoryNames = ['📤 Sent', '👀 Opens', '🖱️ Clicks']
+    chart.categoryAxis.labels.fontSize = 11
+    chart.categoryAxis.labels.fontName = 'Helvetica-Bold'
     chart.valueAxis.valueMin = 0
-    chart.valueAxis.valueMax = max(sent, 1) * 1.1
-    chart.valueAxis.labels.fontSize = 9
+    chart.valueAxis.valueMax = max(sent, 1) * 1.2
+    chart.valueAxis.labels.fontSize = 10
     
-    chart.bars[0].fillColor = colors.HexColor('#3b82f6')
+    # Vibrant gradient colors
+    chart.bars[0].fillColor = colors.HexColor('#6366f1')
+    chart.bars.strokeColor = colors.HexColor('#4f46e5')
+    chart.bars.strokeWidth = 2
     
-    from reportlab.graphics.shapes import String
-    title = String(250, 175, 'Email Performance Metrics', textAnchor='middle')
-    title.fontSize = 12
+    # Modern title
+    title = String(250, 220, '📊 Email Campaign Performance Overview', textAnchor='middle')
+    title.fontSize = 14
     title.fontName = 'Helvetica-Bold'
+    title.fillColor = colors.HexColor('#1f2937')
     
     drawing.add(chart)
     drawing.add(title)
     return drawing
 
-def create_fast_form_chart(views, submissions):
-    """Create simplified form conversion chart"""
-    drawing = Drawing(500, 200)
+def create_modern_form_chart(views, submissions):
+    """Create vibrant form conversion donut chart with proper spacing"""
+    drawing = Drawing(500, 280)
     
-    pie = Pie()
-    pie.x = 200
-    pie.y = 60
-    pie.width = 100
-    pie.height = 100
+    # Background
+    from reportlab.graphics.shapes import Rect, String, Circle
+    bg = Rect(0, 0, 500, 280, fillColor=colors.HexColor('#f0fdf4'), strokeColor=colors.HexColor('#bbf7d0'))
+    drawing.add(bg)
     
+    # Donut chart (two circles)
     abandoned = views - submissions if views > submissions else 0
     conversion_rate = (submissions / views * 100) if views > 0 else 0
     
-    pie.data = [submissions, abandoned]
-    pie.labels = [f'Converted\n{submissions:,}\n({conversion_rate:.1f}%)', f'Views Only\n{abandoned:,}']
-    pie.slices[0].fillColor = colors.HexColor('#10b981')
-    pie.slices[1].fillColor = colors.HexColor('#f59e0b')
-    pie.slices.fontSize = 9
+    # Outer circle for total views
+    outer_circle = Circle(250, 140, 80, fillColor=colors.HexColor('#fef3c7'), strokeColor=colors.HexColor('#f59e0b'), strokeWidth=3)
+    drawing.add(outer_circle)
     
-    from reportlab.graphics.shapes import String
-    title = String(250, 175, 'Form Conversion Analysis', textAnchor='middle')
-    title.fontSize = 12
+    # Inner circle for conversions
+    inner_radius = 80 * (conversion_rate / 100) if conversion_rate > 0 else 10
+    inner_circle = Circle(250, 140, inner_radius, fillColor=colors.HexColor('#10b981'), strokeColor=colors.HexColor('#059669'), strokeWidth=2)
+    drawing.add(inner_circle)
+    
+    # Labels with better positioning
+    title = String(250, 250, '📝 Form Conversion Performance', textAnchor='middle')
+    title.fontSize = 16
     title.fontName = 'Helvetica-Bold'
+    title.fillColor = colors.HexColor('#1f2937')
     
-    drawing.add(pie)
+    conversion_label = String(250, 140, f'{conversion_rate:.1f}%', textAnchor='middle')
+    conversion_label.fontSize = 20
+    conversion_label.fontName = 'Helvetica-Bold'
+    conversion_label.fillColor = colors.white
+    
+    stats_label = String(250, 40, f'💡 {submissions:,} conversions from {views:,} views', textAnchor='middle')
+    stats_label.fontSize = 12
+    stats_label.fontName = 'Helvetica-Bold'
+    stats_label.fillColor = colors.HexColor('#374151')
+    
     drawing.add(title)
+    drawing.add(conversion_label)
+    drawing.add(stats_label)
     return drawing
 
-def create_fast_prospect_chart(healthy, issues):
-    """Create simplified prospect health chart"""
-    drawing = Drawing(500, 200)
+def create_modern_prospect_chart(healthy, issues):
+    """Create modern prospect health gauge chart"""
+    drawing = Drawing(500, 300)
     
-    pie = Pie()
-    pie.x = 200
-    pie.y = 60
-    pie.width = 100
-    pie.height = 100
+    # Background
+    from reportlab.graphics.shapes import Rect, String, Wedge
+    bg = Rect(0, 0, 500, 300, fillColor=colors.HexColor('#fef2f2'), strokeColor=colors.HexColor('#fecaca'))
+    drawing.add(bg)
     
     total = healthy + issues
     health_percentage = (healthy / total * 100) if total > 0 else 100
     
-    pie.data = [healthy, issues]
-    pie.labels = [f'Healthy\n{healthy:,}\n({health_percentage:.1f}%)', f'Issues\n{issues:,}']
-    pie.slices[0].fillColor = colors.HexColor('#10b981')
-    pie.slices[1].fillColor = colors.HexColor('#ef4444')
-    pie.slices.fontSize = 9
+    # Create gauge chart (semicircle)
+    center_x, center_y = 250, 150
+    radius = 80
     
-    from reportlab.graphics.shapes import String
-    title = String(250, 175, 'Database Health Status', textAnchor='middle')
-    title.fontSize = 12
+    # Background arc (full semicircle)
+    bg_arc = Wedge(center_x, center_y, radius, 0, 180, fillColor=colors.HexColor('#fee2e2'), strokeColor=colors.HexColor('#fca5a5'), strokeWidth=3)
+    drawing.add(bg_arc)
+    
+    # Health arc (proportional to health percentage)
+    health_angle = (health_percentage / 100) * 180
+    health_arc = Wedge(center_x, center_y, radius-10, 0, health_angle, fillColor=colors.HexColor('#10b981'), strokeColor=colors.HexColor('#059669'), strokeWidth=2)
+    drawing.add(health_arc)
+    
+    # Center text
+    health_text = String(center_x, center_y, f'{health_percentage:.1f}%', textAnchor='middle')
+    health_text.fontSize = 24
+    health_text.fontName = 'Helvetica-Bold'
+    health_text.fillColor = colors.HexColor('#1f2937')
+    
+    # Title
+    title = String(250, 270, '🏥 Database Health Score', textAnchor='middle')
+    title.fontSize = 16
     title.fontName = 'Helvetica-Bold'
+    title.fillColor = colors.HexColor('#1f2937')
     
-    drawing.add(pie)
+    # Stats
+    stats = String(250, 50, f'📊 {healthy:,} healthy records | ⚠️ {issues:,} issues found', textAnchor='middle')
+    stats.fontSize = 12
+    stats.fontName = 'Helvetica-Bold'
+    stats.fillColor = colors.HexColor('#374151')
+    
     drawing.add(title)
+    drawing.add(health_text)
+    drawing.add(stats)
     return drawing
 
 def generate_smart_recommendations(email_metrics, form_metrics, prospect_metrics):

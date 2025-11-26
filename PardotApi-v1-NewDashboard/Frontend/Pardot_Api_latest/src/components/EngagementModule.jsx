@@ -3,16 +3,14 @@ import { useGoogleAuth } from '../pages/Dashboard'
 import './EmailModule.css'
 
 const EngagementModule = () => {
-  const [analysisData, setAnalysisData] = useState(null)
-  const [performanceData, setPerformanceData] = useState(null)
-  const [loading, setLoading] = useState({ analysis: false, performance: false })
+  const [engagementData, setEngagementData] = useState(null)
+  const [loading, setLoading] = useState(false)
   const [exporting, setExporting] = useState({ sheets: false, pdf: false })
-  const [activeTab, setActiveTab] = useState('analysis')
   const [error, setError] = useState('')
   const { googleAuth, handleGoogleAuth } = useGoogleAuth()
 
-  const fetchAnalysis = async () => {
-    setLoading(prev => ({ ...prev, analysis: true }))
+  const fetchEngagementPrograms = async () => {
+    setLoading(true)
     setError('')
     
     try {
@@ -22,36 +20,14 @@ const EngagementModule = () => {
       
       if (response.ok) {
         const data = await response.json()
-        setAnalysisData(data)
+        setEngagementData(data)
       } else {
-        setError('Failed to fetch engagement programs analysis')
+        setError('Failed to fetch engagement programs')
       }
     } catch (error) {
-      setError('Error fetching analysis: ' + error.message)
+      setError('Error fetching engagement programs: ' + error.message)
     } finally {
-      setLoading(prev => ({ ...prev, analysis: false }))
-    }
-  }
-
-  const fetchPerformance = async () => {
-    setLoading(prev => ({ ...prev, performance: true }))
-    setError('')
-    
-    try {
-      const response = await fetch('http://localhost:4001/get-engagement-programs-performance', {
-        credentials: 'include'
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setPerformanceData(data)
-      } else {
-        setError('Failed to fetch engagement programs performance')
-      }
-    } catch (error) {
-      setError('Error fetching performance: ' + error.message)
-    } finally {
-      setLoading(prev => ({ ...prev, performance: false }))
+      setLoading(false)
     }
   }
 
@@ -67,17 +43,14 @@ const EngagementModule = () => {
 
     setExporting(prev => ({ ...prev, sheets: true }))
     try {
-      const currentData = activeTab === 'analysis' ? analysisData : performanceData
-      const exportData = activeTab === 'analysis' 
-        ? formatAnalysisForExport(currentData)
-        : formatPerformanceForExport(currentData)
+      const exportData = formatForExport(engagementData)
 
       const response = await fetch('http://localhost:4001/export-to-sheets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          title: `Engagement Programs ${activeTab === 'analysis' ? 'Analysis' : 'Performance'} - ${new Date().toLocaleDateString()}`,
+          title: `Engagement Programs - ${new Date().toLocaleDateString()}`,
           data: exportData
         })
       })
@@ -103,8 +76,8 @@ const EngagementModule = () => {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          data_type: `engagement_${activeTab}`,
-          data: activeTab === 'analysis' ? analysisData : performanceData
+          data_type: 'engagement_programs',
+          data: engagementData
         })
       })
 
@@ -113,7 +86,7 @@ const EngagementModule = () => {
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `engagement-${activeTab}-report-${new Date().toISOString().split('T')[0]}.pdf`
+        a.download = `engagement-programs-report-${new Date().toISOString().split('T')[0]}.pdf`
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
@@ -128,9 +101,9 @@ const EngagementModule = () => {
     }
   }
 
-  const formatAnalysisForExport = (data) => {
+  const formatForExport = (data) => {
     if (!data) return []
-    const allPrograms = [...(data.active_programs || []), ...(data.inactive_programs || [])]
+    const allPrograms = [...(data.active_programs || []), ...(data.inactive_programs || []), ...(data.paused_programs || [])]
     return allPrograms.map(program => ({
       'Program ID': program.id,
       'Program Name': program.name,
@@ -138,19 +111,6 @@ const EngagementModule = () => {
       'Is Deleted': program.isDeleted ? 'Yes' : 'No',
       'Created Date': program.createdAt ? new Date(program.createdAt).toLocaleDateString() : 'N/A',
       'Updated Date': program.updatedAt ? new Date(program.updatedAt).toLocaleDateString() : 'N/A',
-      'Description': program.description || 'N/A'
-    }))
-  }
-
-  const formatPerformanceForExport = (data) => {
-    if (!data?.all_programs) return []
-    return data.all_programs.map(program => ({
-      'Program ID': program.id,
-      'Program Name': program.name,
-      'Status': program.status,
-      'Is Deleted': program.is_deleted ? 'Yes' : 'No',
-      'Created Date': program.created_at ? new Date(program.created_at).toLocaleDateString() : 'N/A',
-      'Updated Date': program.updated_at ? new Date(program.updated_at).toLocaleDateString() : 'N/A',
       'Description': program.description || 'N/A'
     }))
   }
@@ -164,13 +124,13 @@ const EngagementModule = () => {
     }
   }
 
-  const renderAnalysisTab = () => {
-    if (!analysisData) {
+  const renderEngagementPrograms = () => {
+    if (!engagementData) {
       return (
         <div className="empty-state">
           <div className="empty-icon">🎯</div>
-          <h3>No Analysis Data</h3>
-          <p>Click "Fetch Analysis" to analyze engagement programs</p>
+          <h3>No Engagement Programs Data</h3>
+          <p>Click "Fetch Programs" to load engagement programs</p>
         </div>
       )
     }
@@ -203,28 +163,28 @@ const EngagementModule = () => {
           <div className="summary-grid">
             <div className="summary-card primary">
               <div className="summary-content">
-                <div className="summary-value">{analysisData.summary.total_programs}</div>
+                <div className="summary-value">{engagementData.summary.total_programs}</div>
                 <div className="summary-label">Total Programs</div>
               </div>
             </div>
             
             <div className="summary-card">
               <div className="summary-content">
-                <div className="summary-value">{analysisData.summary.active_count}</div>
+                <div className="summary-value">{engagementData.summary.active_count}</div>
                 <div className="summary-label">Active Programs</div>
               </div>
             </div>
             
             <div className="summary-card">
               <div className="summary-content">
-                <div className="summary-value">{analysisData.summary.inactive_count}</div>
+                <div className="summary-value">{engagementData.summary.inactive_count}</div>
                 <div className="summary-label">Inactive Programs</div>
               </div>
             </div>
             
             <div className="summary-card">
               <div className="summary-content">
-                <div className="summary-value">{analysisData.summary.no_entry_count}</div>
+                <div className="summary-value">{engagementData.summary.paused_count}</div>
                 <div className="summary-label">Paused Programs</div>
               </div>
             </div>
@@ -232,10 +192,10 @@ const EngagementModule = () => {
         </div>
 
         {/* Active Programs */}
-        {analysisData.active_programs && analysisData.active_programs.length > 0 && (
+        {engagementData.active_programs && engagementData.active_programs.length > 0 && (
           <div className="results-section">
             <div className="results-header">
-              <h3>✅ Active Programs ({analysisData.active_programs.length})</h3>
+              <h3>✅ Active Programs ({engagementData.active_programs.length})</h3>
             </div>
             
             <div className="table-container">
@@ -251,7 +211,7 @@ const EngagementModule = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {analysisData.active_programs.map((program) => (
+                  {engagementData.active_programs.map((program) => (
                     <tr key={program.id}>
                       <td>{program.id}</td>
                       <td className="campaign-name">{program.name}</td>
@@ -275,10 +235,10 @@ const EngagementModule = () => {
         )}
 
         {/* Inactive Programs */}
-        {analysisData.inactive_programs && analysisData.inactive_programs.length > 0 && (
+        {engagementData.inactive_programs && engagementData.inactive_programs.length > 0 && (
           <div className="results-section">
             <div className="results-header">
-              <h3>❌ Inactive Programs ({analysisData.inactive_programs.length})</h3>
+              <h3>❌ Inactive Programs ({engagementData.inactive_programs.length})</h3>
             </div>
             
             <div className="table-container">
@@ -294,7 +254,7 @@ const EngagementModule = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {analysisData.inactive_programs.map((program) => (
+                  {engagementData.inactive_programs.map((program) => (
                     <tr key={program.id}>
                       <td>{program.id}</td>
                       <td className="campaign-name">{program.name}</td>
@@ -316,81 +276,12 @@ const EngagementModule = () => {
             </div>
           </div>
         )}
-      </>
-    )
-  }
 
-  const renderPerformanceTab = () => {
-    if (!performanceData) {
-      return (
-        <div className="empty-state">
-          <div className="empty-icon">📈</div>
-          <h3>No Performance Data</h3>
-          <p>Click "Fetch Performance" to get detailed program metrics</p>
-        </div>
-      )
-    }
-
-    return (
-      <>
-        {/* Performance Summary */}
-        <div className="summary-section">
-          <div className="summary-header">
-            <h3>📈 Performance Overview</h3>
-            <div className="export-controls">
-              <button 
-                className="export-btn sheets"
-                onClick={exportToSheets}
-                disabled={exporting.sheets}
-              >
-                {exporting.sheets ? '🔄 Exporting...' : '📊 Export to Sheets'}
-                {!googleAuth && <span className="auth-required">*Auth Required</span>}
-              </button>
-              <button 
-                className="export-btn pdf"
-                onClick={downloadPDF}
-                disabled={exporting.pdf}
-              >
-                {exporting.pdf ? '🔄 Generating...' : '📄 Download PDF'}
-              </button>
-            </div>
-          </div>
-          
-          <div className="summary-grid">
-            <div className="summary-card primary">
-              <div className="summary-content">
-                <div className="summary-value">{performanceData.performance_summary.total_programs}</div>
-                <div className="summary-label">Total Programs</div>
-              </div>
-            </div>
-            
-            <div className="summary-card">
-              <div className="summary-content">
-                <div className="summary-value">{performanceData.top_performers?.length || 0}</div>
-                <div className="summary-label">Top Performers</div>
-              </div>
-            </div>
-          </div>
-          
-          {performanceData.performance_summary.note && (
-            <div style={{ 
-              background: '#f0f9ff', 
-              border: '1px solid #0ea5e9', 
-              borderRadius: '8px', 
-              padding: '1rem', 
-              marginTop: '1rem',
-              color: '#0369a1'
-            }}>
-              ℹ️ {performanceData.performance_summary.note}
-            </div>
-          )}
-        </div>
-
-        {/* All Programs Performance */}
-        {performanceData.all_programs && performanceData.all_programs.length > 0 && (
+        {/* Paused Programs */}
+        {engagementData.paused_programs && engagementData.paused_programs.length > 0 && (
           <div className="results-section">
             <div className="results-header">
-              <h3>📊 All Programs Performance ({performanceData.all_programs.length})</h3>
+              <h3>⏸️ Paused Programs ({engagementData.paused_programs.length})</h3>
             </div>
             
             <div className="table-container">
@@ -406,7 +297,7 @@ const EngagementModule = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {performanceData.all_programs.map((program) => (
+                  {engagementData.paused_programs.map((program) => (
                     <tr key={program.id}>
                       <td>{program.id}</td>
                       <td className="campaign-name">{program.name}</td>
@@ -415,11 +306,11 @@ const EngagementModule = () => {
                           className="rate-badge"
                           style={{ color: getStatusColor(program.status) }}
                         >
-                          {program.status || 'Unknown'}
+                          {program.status}
                         </span>
                       </td>
-                      <td>{program.created_at ? new Date(program.created_at).toLocaleDateString() : 'N/A'}</td>
-                      <td>{program.updated_at ? new Date(program.updated_at).toLocaleDateString() : 'N/A'}</td>
+                      <td>{program.createdAt ? new Date(program.createdAt).toLocaleDateString() : 'N/A'}</td>
+                      <td>{program.updatedAt ? new Date(program.updatedAt).toLocaleDateString() : 'N/A'}</td>
                       <td className="campaign-subject">{program.description || 'No description'}</td>
                     </tr>
                   ))}
@@ -441,31 +332,15 @@ const EngagementModule = () => {
         </div>
       </div>
 
-      {/* Tab Navigation */}
+      {/* Controls */}
       <div className="filter-section">
         <div className="filter-controls">
-          <div className="filter-group">
-            <label>Analysis Type</label>
-            <select 
-              value={activeTab} 
-              onChange={(e) => setActiveTab(e.target.value)}
-            >
-              <option value="analysis">Program Analysis</option>
-              <option value="performance">Performance Metrics</option>
-            </select>
-          </div>
-
           <button 
             className="fetch-btn"
-            onClick={activeTab === 'analysis' ? fetchAnalysis : fetchPerformance}
-            disabled={loading.analysis || loading.performance}
+            onClick={fetchEngagementPrograms}
+            disabled={loading}
           >
-            {loading.analysis || loading.performance 
-              ? '🔄 Loading...' 
-              : activeTab === 'analysis' 
-                ? '🎯 Fetch Analysis' 
-                : '📈 Fetch Performance'
-            }
+            {loading ? '🔄 Loading...' : '🎯 Fetch Engagement Programs'}
           </button>
         </div>
       </div>
@@ -476,8 +351,8 @@ const EngagementModule = () => {
         </div>
       )}
 
-      {/* Content based on active tab */}
-      {activeTab === 'analysis' ? renderAnalysisTab() : renderPerformanceTab()}
+      {/* Engagement Programs Content */}
+      {renderEngagementPrograms()}
     </div>
   )
 }
