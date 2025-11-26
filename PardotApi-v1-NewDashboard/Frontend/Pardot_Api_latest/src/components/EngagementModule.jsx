@@ -354,7 +354,7 @@ const EngagementModule = () => {
       {/* Engagement Programs Content */}
       {renderEngagementPrograms()}
     </div>
-  )
-}
+  );
+};
 
-export default EngagementModule
+export default EngagementModule;

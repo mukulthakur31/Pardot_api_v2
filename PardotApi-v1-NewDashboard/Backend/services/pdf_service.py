@@ -428,84 +428,121 @@ def create_landing_page_pdf_report(landing_page_data):
 
 def create_prospect_pdf_report(health_data):
     """Generate PDF report for prospect health analysis"""
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.75*inch, bottomMargin=0.75*inch, leftMargin=0.75*inch, rightMargin=0.75*inch)
-    
-    content = []
-    styles = getSampleStyleSheet()
-    
-    # Header
-    header_style = ParagraphStyle('ProspectHeader', parent=styles['Heading1'], 
-                                fontSize=20, spaceAfter=16, alignment=1, 
-                                textColor=colors.HexColor('#1f2937'), fontName='Helvetica-Bold')
-    
-    content.append(Paragraph("🏥 PROSPECT DATABASE HEALTH REPORT", header_style))
-    content.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", 
-                           ParagraphStyle('Subtitle', parent=styles['Normal'], fontSize=12, spaceAfter=16, alignment=1, textColor=colors.HexColor('#6b7280'))))
-    
-    # Health summary
-    summary_data = [
-        ['📊 DATABASE HEALTH SUMMARY', 'COUNT', 'PERCENTAGE'],
-        ['Total Prospects', f"{health_data['total_prospects']:,}", '100%'],
-        ['Duplicate Prospects', f"{health_data['duplicates']['count']:,}", f"{(health_data['duplicates']['count']/health_data['total_prospects']*100):.1f}%"],
-        ['Inactive Prospects (90+ days)', f"{health_data['inactive_prospects']['count']:,}", f"{(health_data['inactive_prospects']['count']/health_data['total_prospects']*100):.1f}%"],
-        ['Missing Critical Fields', f"{health_data['missing_fields']['count']:,}", f"{(health_data['missing_fields']['count']/health_data['total_prospects']*100):.1f}%"],
-        ['Scoring Issues', f"{health_data['scoring_issues']['count']:,}", f"{(health_data['scoring_issues']['count']/health_data['total_prospects']*100):.1f}%"]
-    ]
-    
-    summary_table = Table(summary_data, colWidths=[3*inch, 1.5*inch, 1.5*inch])
-    summary_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#64748b')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 11),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('LEFTPADDING', (0, 0), (-1, -1), 6),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 6)
-    ]))
-    
-    content.append(summary_table)
-    content.append(Spacer(1, 0.3*inch))
-    
-    # Grading analysis
-    grading = health_data.get('grading_analysis', {})
-    if grading:
-        content.append(Paragraph("📊 GRADING ANALYSIS", 
-                               ParagraphStyle('SectionHeader', parent=styles['Heading2'], fontSize=16, spaceAfter=12, textColor=colors.HexColor('#1f2937'))))
+    try:
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.75*inch, bottomMargin=0.75*inch, leftMargin=0.75*inch, rightMargin=0.75*inch)
         
-        grading_data = [
-            ['Grading Metric', 'Value'],
-            ['Grading Coverage', f"{grading.get('grading_coverage', 0):.1f}%"],
-            ['Graded Prospects', f"{grading.get('graded_prospects', 0):,}"],
-            ['Ungraded Prospects', f"{grading.get('ungraded_prospects', 0):,}"]
+        content = []
+        styles = getSampleStyleSheet()
+        
+        # Header
+        header_style = ParagraphStyle('ProspectHeader', parent=styles['Heading1'], 
+                                    fontSize=20, spaceAfter=16, alignment=1, 
+                                    textColor=colors.HexColor('#1f2937'), fontName='Helvetica-Bold')
+        
+        content.append(Paragraph("🏥 PROSPECT DATABASE HEALTH REPORT", header_style))
+        content.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", 
+                               ParagraphStyle('Subtitle', parent=styles['Normal'], fontSize=12, spaceAfter=16, alignment=1, textColor=colors.HexColor('#6b7280'))))
+        
+        # Handle different data structures
+        if isinstance(health_data, dict) and 'summary' in health_data:
+            # New format with summary
+            summary = health_data['summary']
+            total_prospects = summary.get('total_prospects', 0)
+            duplicates_count = summary.get('duplicate_groups', 0)
+            inactive_count = summary.get('inactive_prospects', 0)
+            missing_fields_count = summary.get('missing_fields_prospects', 0)
+            scoring_issues_count = summary.get('scoring_issues_prospects', 0)
+        else:
+            # Legacy format or direct data
+            total_prospects = health_data.get('total_prospects', 0)
+            duplicates_count = health_data.get('duplicates', {}).get('count', 0) if isinstance(health_data.get('duplicates'), dict) else len(health_data.get('duplicates', []))
+            inactive_count = health_data.get('inactive_prospects', {}).get('count', 0) if isinstance(health_data.get('inactive_prospects'), dict) else len(health_data.get('inactive_prospects', []))
+            missing_fields_count = health_data.get('missing_fields', {}).get('count', 0) if isinstance(health_data.get('missing_fields'), dict) else len(health_data.get('missing_fields', []))
+            scoring_issues_count = health_data.get('scoring_issues', {}).get('count', 0) if isinstance(health_data.get('scoring_issues'), dict) else len(health_data.get('scoring_issues', []))
+        
+        # Health summary
+        summary_data = [
+            ['📊 DATABASE HEALTH SUMMARY', 'COUNT', 'PERCENTAGE'],
+            ['Total Prospects', f"{total_prospects:,}", '100%'],
+            ['Duplicate Prospects', f"{duplicates_count:,}", f"{(duplicates_count/max(total_prospects, 1)*100):.1f}%"],
+            ['Inactive Prospects (90+ days)', f"{inactive_count:,}", f"{(inactive_count/max(total_prospects, 1)*100):.1f}%"],
+            ['Missing Critical Fields', f"{missing_fields_count:,}", f"{(missing_fields_count/max(total_prospects, 1)*100):.1f}%"],
+            ['Scoring Issues', f"{scoring_issues_count:,}", f"{(scoring_issues_count/max(total_prospects, 1)*100):.1f}%"]
         ]
         
-        grading_table = Table(grading_data, colWidths=[3.2*inch, 1.8*inch])
-        grading_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#22c55e')),
+        summary_table = Table(summary_data, colWidths=[3*inch, 1.5*inch, 1.5*inch])
+        summary_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#64748b')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')]),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 4)
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 6)
         ]))
         
-        content.append(grading_table)
+        content.append(summary_table)
+        content.append(Spacer(1, 0.3*inch))
     
-    doc.build(content)
-    buffer.seek(0)
-    return buffer
+        # Grading analysis (optional)
+        grading = health_data.get('grading_analysis', {})
+        if grading:
+            content.append(Paragraph("📊 GRADING ANALYSIS", 
+                                   ParagraphStyle('SectionHeader', parent=styles['Heading2'], fontSize=16, spaceAfter=12, textColor=colors.HexColor('#1f2937'))))
+            
+            grading_data = [
+                ['Grading Metric', 'Value'],
+                ['Grading Coverage', f"{grading.get('grading_coverage', 0):.1f}%"],
+                ['Graded Prospects', f"{grading.get('graded_prospects', 0):,}"],
+                ['Ungraded Prospects', f"{grading.get('ungraded_prospects', 0):,}"]
+            ]
+            
+            grading_table = Table(grading_data, colWidths=[3.2*inch, 1.8*inch])
+            grading_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#22c55e')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')]),
+                ('TOPPADDING', (0, 0), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                ('LEFTPADDING', (0, 0), (-1, -1), 4),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 4)
+            ]))
+            
+            content.append(grading_table)
+        else:
+            # Add basic recommendations if no grading data
+            content.append(Paragraph("💡 RECOMMENDATIONS", 
+                                   ParagraphStyle('SectionHeader', parent=styles['Heading2'], fontSize=16, spaceAfter=12, textColor=colors.HexColor('#1f2937'))))
+            
+            recommendations = [
+                "• Clean up duplicate prospects to improve data accuracy",
+                "• Re-engage inactive prospects with targeted campaigns", 
+                "• Complete missing profile information for better segmentation",
+                "• Review and optimize lead scoring criteria",
+                "• Implement regular database maintenance procedures"
+            ]
+            
+            for rec in recommendations:
+                content.append(Paragraph(rec, ParagraphStyle('Rec', parent=styles['Normal'], fontSize=11, spaceAfter=6, leftIndent=20)))
+        
+        doc.build(content)
+        buffer.seek(0)
+        return buffer
+        
+    except Exception as e:
+        print(f"Error in create_prospect_pdf_report: {str(e)}")
+        return create_error_pdf(f"Prospect PDF generation failed: {str(e)}")
 
 # Helper functions for email PDF report
 def create_modern_header_and_summary(stats_list, filterType, startDate, endDate):
@@ -863,20 +900,7 @@ def create_comprehensive_summary_pdf(email_stats, form_stats, prospect_health, l
             content.append(create_modern_prospect_chart(prospect_metrics['healthy'], prospect_metrics['issues_count']))
             content.append(PageBreak())
         
-        # ENGAGEMENT PROGRAMS SECTION
-        if engagement_programs:
-            content.append(Paragraph("🎯 ENGAGEMENT PROGRAMS", section_style))
-            content.append(Spacer(1, 0.2*inch))
-            
-            summary = engagement_programs.get('summary', {})
-            content.append(Paragraph(f"Total Programs: {summary.get('total_programs', 0):,}", metric_style))
-            content.append(Paragraph(f"Active Programs: {summary.get('active_count', 0):,}", metric_style))
-            content.append(Paragraph(f"Paused Programs: {summary.get('paused_count', 0):,}", metric_style))
-            content.append(Paragraph(f"Completed Programs: {summary.get('completed_count', 0):,}", metric_style))
-            
-            content.append(Spacer(1, 0.2*inch))
-            content.append(create_fast_engagement_chart(summary.get('active_count', 0), summary.get('paused_count', 0), summary.get('completed_count', 0)))
-            content.append(PageBreak())
+
         
         # UTM ANALYSIS SECTION
         if utm_analysis:
@@ -1239,32 +1263,7 @@ def create_fast_landing_chart(active, inactive):
     drawing.add(title)
     return drawing
 
-def create_fast_engagement_chart(active, paused, completed):
-    """Create engagement programs chart"""
-    drawing = Drawing(500, 200)
-    chart = VerticalBarChart()
-    chart.x = 100
-    chart.y = 50
-    chart.height = 120
-    chart.width = 300
-    
-    chart.data = [[active, paused, completed]]
-    chart.categoryAxis.categoryNames = ['Active', 'Paused', 'Completed']
-    chart.categoryAxis.labels.fontSize = 10
-    chart.valueAxis.valueMin = 0
-    chart.valueAxis.valueMax = max(active, paused, completed, 1) * 1.1
-    chart.valueAxis.labels.fontSize = 9
-    
-    chart.bars[0].fillColor = colors.HexColor('#8b5cf6')
-    
-    from reportlab.graphics.shapes import String
-    title = String(250, 175, 'Engagement Program Status', textAnchor='middle')
-    title.fontSize = 12
-    title.fontName = 'Helvetica-Bold'
-    
-    drawing.add(chart)
-    drawing.add(title)
-    return drawing
+
 
 def create_fast_utm_chart(clean, issues):
     """Create UTM data quality chart"""

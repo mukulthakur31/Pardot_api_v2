@@ -22,6 +22,9 @@ def download_pdf():
         data = request.json.get("data")
         print(f"Data type: {data_type}, Data: {type(data)}")
         
+        print(f"[DEBUG] PDF Request - Data Type: {data_type}")
+        print(f"[DEBUG] PDF Request - Data Keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+        
         if not data:
             print("No data provided")
             return jsonify({"error": "No data provided"}), 400
@@ -37,8 +40,13 @@ def download_pdf():
             buffer = create_form_pdf_report(data)
             filename = "form_stats_report.pdf"
         elif data_type == "prospects":
-            buffer = create_prospect_pdf_report(data)
-            filename = "prospect_health_report.pdf"
+            # Handle the data structure properly
+            try:
+                buffer = create_prospect_pdf_report(data)
+                filename = "prospect_health_report.pdf"
+            except Exception as e:
+                print(f"Error creating prospect PDF: {str(e)}")
+                return jsonify({"error": f"PDF generation failed: {str(e)}"}), 500
         elif data_type == "landing_pages":
             buffer = create_landing_page_pdf_report(data)
             filename = "landing_pages_report.pdf"

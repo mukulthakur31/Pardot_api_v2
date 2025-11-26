@@ -3,14 +3,31 @@ import logging
 from services.engagement_service import get_engagement_programs_analysis, EngagementServiceError
 from middleware.auth_middleware import require_auth
 from cache import get_cached_data, set_cached_data
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
 engagement_bp = Blueprint('engagement', __name__)
 
-@engagement_bp.route("/get-engagement-programs-analysis", methods=["GET"])
+# Tab cache for engagement data
+tab_cache = {}
+
+def get_or_create_tab_cache(cache_key):
+    if cache_key not in tab_cache:
+        cached_data = get_cached_data(cache_key)
+        if cached_data:
+            tab_cache[cache_key] = {
+                'all_programs': cached_data.get('all_programs', []),
+                'active_programs': cached_data.get('active_programs', []),
+                'inactive_programs': cached_data.get('inactive_programs', []),
+                'low_performance': cached_data.get('low_performance', []),
+                'no_entries': cached_data.get('no_entries', [])
+            }
+    return tab_cache.get(cache_key)
+
+@engagement_bp.route("/engagement-health-analysis", methods=["GET"])
 @require_auth
-def get_engagement_programs_analysis_route():
+def engagement_health_analysis():
     try:
         cache_key = f"engagement_programs:{g.access_token[:20]}"
         cached_data = get_cached_data(cache_key)
