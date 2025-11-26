@@ -1,5 +1,78 @@
 import requests
 from config.settings import BUSINESS_UNIT_ID
+from datetime import datetime, timedelta
+
+class EngagementHealthAuditor:
+    def __init__(self, access_token):
+        self.access_token = access_token
+        self.headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Pardot-Business-Unit-Id": BUSINESS_UNIT_ID
+        }
+    
+    def analyze_engagement_health(self):
+        """Comprehensive engagement program health analysis"""
+        try:
+            programs = self._fetch_all_programs()
+            
+            # Categorize programs
+            all_programs = programs
+            active_programs = [p for p in programs if p.get('status') == 'Running' and not p.get('isDeleted')]
+            inactive_programs = [p for p in programs if p.get('status') != 'Running' or p.get('isDeleted')]
+            low_performance = [p for p in programs if p.get('isDeleted')]
+            no_entries = [p for p in programs if p.get('status') == 'Paused']
+            
+            return {
+                "summary": {
+                    "total_programs": len(all_programs),
+                    "active_count": len(active_programs),
+                    "inactive_count": len(inactive_programs),
+                    "low_performance_count": len(low_performance),
+                    "no_entries_count": len(no_entries)
+                },
+                "all_programs": all_programs,
+                "active_programs": active_programs,
+                "inactive_programs": inactive_programs,
+                "low_performance": low_performance,
+                "no_entries": no_entries
+            }
+        except Exception as e:
+            raise Exception(f"Error in engagement health analysis: {str(e)}")
+    
+    def _fetch_all_programs(self):
+        """Fetch all engagement programs with pagination"""
+        all_programs = []
+        offset = 0
+        limit = 200
+        
+        while True:
+            response = requests.get(
+                "https://pi.pardot.com/api/v5/objects/engagement-studio-programs",
+                headers=self.headers,
+                params={
+                    "fields": "id,name,status,isDeleted,createdAt,updatedAt,description,folderId",
+                    "limit": limit,
+                    "offset": offset
+                }
+            )
+            
+            if response.status_code != 200:
+                raise Exception(f"Error fetching programs: {response.text}")
+            
+            data = response.json()
+            programs = data.get("values", [])
+            
+            if not programs:
+                break
+            
+            all_programs.extend(programs)
+            
+            if len(programs) < limit:
+                break
+            
+            offset += limit
+        
+        return all_programs
 
 def get_engagement_programs_analysis(access_token):
     """Analyze engagement programs for completion rates and entries"""
