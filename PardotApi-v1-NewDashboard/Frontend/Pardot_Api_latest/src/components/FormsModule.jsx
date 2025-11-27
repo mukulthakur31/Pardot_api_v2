@@ -31,19 +31,24 @@ const FormsModule = () => {
         }
       }
       
-      const response = await fetch(`http://localhost:4001/get-form-stats?${params}`, {
+      // First call: Fetch main stats (this populates the cache)
+      const statsResponse = await fetch(`http://localhost:4001/get-form-stats?${params}`, {
         credentials: 'include'
       })
       
-      if (response.ok) {
-        const data = await response.json()
-        setFormStats(data)
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
         
-        // Fetch additional data
-        await Promise.all([
+        // Now fetch additional data (these will use cached data)
+        const [activeInactiveData, abandonmentData] = await Promise.all([
           fetchActiveInactiveForms(),
           fetchAbandonmentAnalysis()
         ])
+        
+        // Update all state at once after all data is ready
+        setFormStats(statsData)
+        if (activeInactiveData) setActiveInactiveData(activeInactiveData)
+        if (abandonmentData) setAbandonmentData(abandonmentData)
       } else {
         setError('Failed to fetch form statistics')
       }
@@ -56,15 +61,25 @@ const FormsModule = () => {
 
   const fetchActiveInactiveForms = async () => {
     try {
-      const response = await fetch('http://localhost:4001/get-active-inactive-forms', {
+      const params = new URLSearchParams()
+      if (filters.filterType !== 'all') {
+        params.append('filter_type', filters.filterType)
+        if (filters.filterType === 'custom' && filters.startDate && filters.endDate) {
+          params.append('start_date', filters.startDate)
+          params.append('end_date', filters.endDate)
+        }
+      }
+      const response = await fetch(`http://localhost:4001/get-active-inactive-forms?${params}`, {
         credentials: 'include'
       })
-      if (response.ok) {
+      if (response.ok) { 
         const data = await response.json()
-        setActiveInactiveData(data)
+        return data
       }
+      return null
     } catch (error) {
       console.error('Error fetching active/inactive forms:', error)
+      return null
     }
   }
 
@@ -84,10 +99,12 @@ const FormsModule = () => {
       })
       if (response.ok) {
         const data = await response.json()
-        setAbandonmentData(data)
+        return data
       }
+      return null
     } catch (error) {
       console.error('Error fetching abandonment analysis:', error)
+      return null
     }
   }
 
