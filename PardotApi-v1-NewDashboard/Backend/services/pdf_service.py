@@ -701,7 +701,17 @@ def create_insights_section(stats_list):
     content.append(insights_table)
     return content
 
+# Import the new comprehensive PDF functions
+try:
+    from .pdf_service_new import create_comprehensive_summary_pdf as create_new_comprehensive_summary_pdf
+except ImportError:
+    from pdf_service_new import create_comprehensive_summary_pdf as create_new_comprehensive_summary_pdf
+
 def create_comprehensive_summary_pdf(email_stats, form_stats, prospect_health, landing_page_stats=None, engagement_programs=None, utm_analysis=None):
+    """Use the new comprehensive PDF generator"""
+    return create_new_comprehensive_summary_pdf(email_stats, form_stats, prospect_health, landing_page_stats, engagement_programs, utm_analysis)
+
+def create_comprehensive_summary_pdf_old(email_stats, form_stats, prospect_health, landing_page_stats=None, engagement_programs=None, utm_analysis=None):
     """Generate vibrant, modern Pardot report with creative design"""
     try:
         buffer = BytesIO()
