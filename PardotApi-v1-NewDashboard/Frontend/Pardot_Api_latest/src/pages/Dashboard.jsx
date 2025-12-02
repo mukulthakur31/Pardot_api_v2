@@ -298,9 +298,9 @@ const Dashboard = () => {
           boxShadow: '1px 0 3px rgba(0,0,0,0.05)'
         }}>
           <h3 style={{
-            fontSize: '0.9rem',
-            fontWeight: '700',
-            color: '#706E6B',
+            fontSize: '1.1rem',
+            fontWeight: '800',
+            color: '#00396B',
             marginBottom: '1.5rem',
             textAlign: 'left',
             textTransform: 'uppercase',
@@ -324,8 +324,8 @@ const Dashboard = () => {
                   background: activeModule === module.id ? '#E8F4FD' : 'transparent',
                   color: activeModule === module.id ? '#00396B' : '#706E6B',
                   cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: activeModule === module.id ? '600' : '500',
+                  fontSize: '1rem',
+                  fontWeight: '700',
                   textAlign: 'left',
                   transition: 'all 0.2s ease'
                 }}

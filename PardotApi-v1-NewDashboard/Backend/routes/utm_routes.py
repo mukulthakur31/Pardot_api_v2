@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, g
 from services.utm_service import get_utm_analysis
 from middleware.auth_middleware import require_auth
+from cache import get_cached_data,set_cached_data
 
 utm_bp = Blueprint('utm', __name__)
 
@@ -9,7 +10,14 @@ utm_bp = Blueprint('utm', __name__)
 def get_utm_analysis_route():
     
     try:
+        cache_key= f'UTM:{g.access_token[:20]}'
+
+        cached_data= get_cached_data(cache_key)
+        if cached_data:
+            return jsonify(cached_data)
+        
         analysis_data = get_utm_analysis(g.access_token)
+        set_cached_data(cache_key,analysis_data,ttl=1800)
         return jsonify(analysis_data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
