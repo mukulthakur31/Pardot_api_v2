@@ -39,18 +39,22 @@ const Dashboard = () => {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('http://localhost:4001/check-auth', {
+      const response = await fetch('http://localhost:4001/auth-status', {
         credentials: 'include'
       })
       
-      if (!response.ok) {
-        navigate('/')
-        return
-      }
+      const data = await response.json()
       
-      setPardotConnected(true)
+      if (data.authenticated) {
+        setPardotConnected(true)
+      } else {
+        console.log('Auth failed:', data.reason)
+        setPardotConnected(false)
+        // Don't navigate away, just show the button as disabled
+      }
     } catch (error) {
-      navigate('/')
+      console.error('Auth check error:', error)
+      setPardotConnected(false)
     }
   }
 
@@ -129,7 +133,8 @@ const Dashboard = () => {
       })
       
       if (!response.ok) {
-        throw new Error('Failed to generate report')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || 'Failed to generate report')
       }
       
       // Create blob and download
@@ -148,7 +153,7 @@ const Dashboard = () => {
       setTimeout(() => setReportSuccess(false), 3000)
     } catch (error) {
       console.error('Error generating report:', error)
-      alert('Failed to generate report. Please try again.')
+      alert(`Failed to generate report: ${error.message}`)
     } finally {
       setGeneratingReport(false)
     }
@@ -231,26 +236,53 @@ const Dashboard = () => {
           )}
 
           {/* Pardot Status */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.5rem 1rem',
-            borderRadius: '6px',
-            background: pardotConnected ? '#E8F4FD' : '#FEF2F2',
-            border: `1px solid ${pardotConnected ? '#B8E6FF' : '#FECACA'}`,
-            color: pardotConnected ? '#00396B' : '#DC2626',
-            fontSize: '0.85rem',
-            fontWeight: '600'
-          }}>
+          {!pardotConnected ? (
+            <button
+              onClick={() => window.location.href = 'http://localhost:4001/login'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '6px',
+                background: '#DC2626',
+                border: 'none',
+                color: 'white',
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: '#ffffff'
+              }}></div>
+              Login to Salesforce
+            </button>
+          ) : (
             <div style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: pardotConnected ? '#01d32fff' : '#EF4444'
-            }}></div>
-            Salesforce
-          </div>
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
+              background: '#E8F4FD',
+              border: '1px solid #B8E6FF',
+              color: '#00396B',
+              fontSize: '0.85rem',
+              fontWeight: '600'
+            }}>
+              <div style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: '#01d32fff'
+              }}></div>
+              Salesforce Connected
+            </div>
+          )}
 
           {/* Google Connect/Disconnect Button */}
           <button
@@ -397,6 +429,26 @@ const Dashboard = () => {
                   '📊 Generate Full Report'
                 )}
               </button>
+              {!pardotConnected && (
+                <button
+                  onClick={() => window.location.href = 'http://localhost:4001/login'}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 1rem',
+                    margin: '0.5rem 0',
+                    border: '1px solid #0176D3',
+                    borderRadius: '6px',
+                    background: 'transparent',
+                    color: '#0176D3',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    fontWeight: '600',
+                    textAlign: 'center'
+                  }}
+                >
+                  🔐 Login to Salesforce
+                </button>
+              )}
               <p style={{
                 fontSize: '0.7rem',
                 color: '#9CA3AF',

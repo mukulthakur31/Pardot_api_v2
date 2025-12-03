@@ -34,7 +34,7 @@ def callback():
         # Create JWT with token reference
         jwt_payload = {
             'token_ref': access_token[:10],  # First 10 chars as reference
-            'exp': int(time.time()) + (8 * 3600),  # 8 hours
+            'exp': int(time.time()) + (24 * 3600),  # 24 hours
             'iat': int(time.time())
         }
         
@@ -45,10 +45,11 @@ def callback():
         response.set_cookie(
             'auth_token',
             jwt_token,
-            max_age=8*3600,
-            httponly=True,
-            secure=False,  # Set True in production
-            samesite='Lax'
+            max_age=24*3600,  # 24 hours
+            httponly=False,  # Allow JS access for debugging
+            secure=False,
+            samesite='Lax',
+            path='/'
         )
         
         return response
@@ -60,5 +61,34 @@ def callback():
 @require_auth
 def check_auth():
     """Check if user is authenticated"""
-    return jsonify({"authenticated": True})
+    return jsonify({"authenticated": True, "token_valid": True})
+
+@auth_bp.route("/auth-status")
+def auth_status():
+    """Check authentication status without requiring auth"""
+    try:
+        jwt_token = request.cookies.get('auth_token')
+        if not jwt_token:
+            return jsonify({"authenticated": False, "reason": "No JWT token found"})
+        
+        # Try to decode JWT
+        payload = jwt.decode(jwt_token, SECRET_KEY, algorithms=['HS256'])
+        token_ref = payload.get('token_ref')
+        
+        # Check if we have a valid Salesforce token
+        actual_token = auth_service.get_valid_access_token()
+        if not actual_token:
+            return jsonify({"authenticated": False, "reason": "No Salesforce token available"})
+        
+        if not actual_token.startswith(token_ref):
+            return jsonify({"authenticated": False, "reason": "Token reference mismatch"})
+        
+        return jsonify({"authenticated": True, "token_valid": True})
+        
+    except jwt.ExpiredSignatureError:
+        return jsonify({"authenticated": False, "reason": "JWT token expired"})
+    except jwt.InvalidTokenError:
+        return jsonify({"authenticated": False, "reason": "Invalid JWT token"})
+    except Exception as e:
+        return jsonify({"authenticated": False, "reason": f"Auth check failed: {str(e)}"})
 

@@ -30,13 +30,21 @@ def get_or_create_tab_cache(cache_key):
 def engagement_health_analysis():
     try:
         cache_key = f"engagement_programs:{g.access_token[:20]}"
-        cached_data = get_cached_data(cache_key)
         
+        # Check cache first
+        cached_data = get_cached_data(cache_key)
         if cached_data:
+            print(f"📦 ENGAGEMENT DATA: Retrieved from CACHE - Key: {cache_key}")
             return jsonify(cached_data)
         
+        # Fetch fresh data from API
+        print(f"🌐 ENGAGEMENT DATA: Fetching from API - Key: {cache_key}")
         engagement_data = get_engagement_programs_analysis(g.access_token)
+        
+        # Cache the data for 30 minutes
         set_cached_data(cache_key, engagement_data, ttl=1800)
+        print(f"💾 ENGAGEMENT DATA: Cached for 30 minutes - Key: {cache_key}")
+        
         return jsonify(engagement_data)
     except EngagementServiceError as e:
         logger.error(f"Engagement service error: {str(e)}")
