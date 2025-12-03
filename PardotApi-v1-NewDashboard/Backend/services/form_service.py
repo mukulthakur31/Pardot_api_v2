@@ -176,7 +176,7 @@ def get_form_stats(access_token, created_after=None, created_before=None):
             activities_future = executor.submit(fetch_all_activities, headers, created_after, created_before)
             
             forms = forms_future.result()
-            activities = activities_future.result()
+            activities = activities_future.result()  
         
         print(f"Forms count: {len(forms) if forms else 0}")
         print(f"Activities count: {len(activities) if activities else 0}")

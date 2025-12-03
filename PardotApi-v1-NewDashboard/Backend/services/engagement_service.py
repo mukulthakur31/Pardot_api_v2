@@ -1,6 +1,6 @@
 import requests
-import logging
 from config.settings import BUSINESS_UNIT_ID
+<<<<<<< HEAD
 from datetime import datetime, timedelta
 from cache import get_cached_data, set_cached_data
 
@@ -77,6 +77,8 @@ class EngagementHealthAuditor:
         return all_programs
 
 logger = logging.getLogger(__name__)
+=======
+>>>>>>> f378ea016ddbaa9c4f5971c5d82480a01750cb70
 
 class EngagementServiceError(Exception):
     """Custom exception for engagement service errors"""
@@ -117,7 +119,6 @@ def _fetch_all_programs(headers):
             
         offset += limit
     
-    logger.info(f"Fetched {len(all_programs)} total engagement programs")
     return all_programs
 
 def get_engagement_programs_analysis(access_token):
@@ -163,5 +164,4 @@ def get_engagement_programs_analysis(access_token):
             "deleted_programs": deleted_programs
         }
     except Exception as e:
-        logger.error(f"Error in get_engagement_programs_analysis: {str(e)}")
         raise EngagementServiceError(f"Failed to fetch engagement programs: {str(e)}") from e

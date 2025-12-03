@@ -126,14 +126,16 @@ def create_form_pdf_report(form_stats):
 
 def create_utm_pdf_report(utm_data):
     """Generate PDF report for UTM analysis"""
+
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.75*inch, bottomMargin=0.75*inch, leftMargin=0.75*inch, rightMargin=0.75*inch)
-    
+
+
     content = []
     styles = getSampleStyleSheet()
     
     # Header
-    header_style = ParagraphStyle('UTMHeader', parent=styles['Heading1'], 
+    header_style = ParagraphStyle('UTMHeader', parent=styles['Heading1'],
                                 fontSize=20, spaceAfter=16, alignment=1, 
                                 textColor=colors.HexColor('#1f2937'), fontName='Helvetica-Bold')
     
@@ -152,7 +154,8 @@ def create_utm_pdf_report(utm_data):
         ['UTM Issues Found', f"{utm_analysis.get('prospects_with_utm_issues', 0):,}"],
         ['Data Quality Score', f"{utm_analysis.get('data_quality_score', 0):.1f}%"]
     ]
-    
+
+
     summary_table = Table(summary_data, colWidths=[3.2*inch, 1.8*inch])
     summary_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#475569')),
@@ -582,8 +585,22 @@ def create_insights_section(stats_list):
     content.append(insights_table)
     return content
 
+# Import the new comprehensive PDF functions
+try:
+    from .pdf_service_new import create_comprehensive_summary_pdf as create_new_comprehensive_summary_pdf
+except ImportError:
+    from pdf_service_new import create_comprehensive_summary_pdf as create_new_comprehensive_summary_pdf
+
 def create_comprehensive_summary_pdf(email_stats, form_stats, prospect_health, landing_page_stats=None, engagement_programs=None, utm_analysis=None):
+<<<<<<< HEAD
     """Generate comprehensive full audit report with detailed analysis"""
+=======
+    """Use the new comprehensive PDF generator"""
+    return create_new_comprehensive_summary_pdf(email_stats, form_stats, prospect_health, landing_page_stats, engagement_programs, utm_analysis)
+
+def create_comprehensive_summary_pdf_old(email_stats, form_stats, prospect_health, landing_page_stats=None, engagement_programs=None, utm_analysis=None):
+    """Generate vibrant, modern Pardot report with creative design"""
+>>>>>>> f378ea016ddbaa9c4f5971c5d82480a01750cb70
     try:
         buffer = BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch, leftMargin=0.6*inch, rightMargin=0.6*inch)
