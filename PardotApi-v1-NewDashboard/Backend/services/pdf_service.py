@@ -585,22 +585,59 @@ def create_insights_section(stats_list):
     content.append(insights_table)
     return content
 
-# Import the new comprehensive PDF functions
+# Import PDF functions with multiple fallbacks
 try:
-    from .pdf_service_new import create_comprehensive_summary_pdf as create_new_comprehensive_summary_pdf
+    from .comprehensive_pdf_updated import create_comprehensive_audit_pdf as create_new_comprehensive_summary_pdf
+    print("✅ Successfully imported enhanced comprehensive PDF generator")
+except ImportError as e:
+    print(f"⚠️ Enhanced PDF import failed: {e}")
+    try:
+        from comprehensive_pdf_updated import create_comprehensive_audit_pdf as create_new_comprehensive_summary_pdf
+        print("✅ Successfully imported enhanced PDF generator (direct import)")
+    except ImportError as e2:
+        print(f"❌ Both enhanced import attempts failed: {e2}")
+        create_new_comprehensive_summary_pdf = None
+
+# Import safe PDF as ultimate fallback
+try:
+    from .safe_pdf import create_safe_comprehensive_pdf
+    print("✅ Safe PDF fallback imported successfully")
 except ImportError:
-    from pdf_service_new import create_comprehensive_summary_pdf as create_new_comprehensive_summary_pdf
+    try:
+        from safe_pdf import create_safe_comprehensive_pdf
+        print("✅ Safe PDF fallback imported successfully (direct)")
+    except ImportError as e:
+        print(f"❌ Safe PDF import failed: {e}")
+        create_safe_comprehensive_pdf = None
 
 def create_comprehensive_summary_pdf(email_stats, form_stats, prospect_health, landing_page_stats=None, engagement_programs=None, utm_analysis=None):
-<<<<<<< HEAD
-    """Generate comprehensive full audit report with detailed analysis"""
-=======
-    """Use the new comprehensive PDF generator"""
-    return create_new_comprehensive_summary_pdf(email_stats, form_stats, prospect_health, landing_page_stats, engagement_programs, utm_analysis)
+    """Use the new comprehensive PDF generator with multiple fallbacks"""
+    # Try enhanced version first
+    if create_new_comprehensive_summary_pdf:
+        try:
+            print("🚀 Attempting enhanced PDF generation...")
+            return create_new_comprehensive_summary_pdf(email_stats, form_stats, prospect_health, landing_page_stats, engagement_programs, utm_analysis)
+        except Exception as e:
+            print(f"❌ Enhanced PDF generation failed: {e}")
+    
+    # Try safe version second
+    if create_safe_comprehensive_pdf:
+        try:
+            print("🔄 Falling back to safe PDF generator...")
+            return create_safe_comprehensive_pdf(email_stats, form_stats, prospect_health, landing_page_stats, engagement_programs, utm_analysis)
+        except Exception as e:
+            print(f"❌ Safe PDF generation failed: {e}")
+    
+    # Try old version as last resort
+    try:
+        print("🔄 Using legacy comprehensive PDF generator...")
+        return create_comprehensive_summary_pdf_old(email_stats, form_stats, prospect_health, landing_page_stats, engagement_programs, utm_analysis)
+    except Exception as e:
+        print(f"❌ All PDF generation methods failed: {e}")
+        return create_error_pdf(f"All PDF generation methods failed: {str(e)}")
 
 def create_comprehensive_summary_pdf_old(email_stats, form_stats, prospect_health, landing_page_stats=None, engagement_programs=None, utm_analysis=None):
     """Generate vibrant, modern Pardot report with creative design"""
->>>>>>> f378ea016ddbaa9c4f5971c5d82480a01750cb70
     try:
         buffer = BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch, leftMargin=0.6*inch, rightMargin=0.6*inch)
@@ -620,11 +657,11 @@ def create_comprehensive_summary_pdf_old(email_stats, form_stats, prospect_healt
         
         # Calculate key metrics
         total_prospects = prospect_health.get('total_prospects', 0) if prospect_health else 0
-        total_emails = len(email_stats) if email_stats else 0
-        total_forms = len(form_stats) if form_stats else 0
+        total_emails = len(email_stats) if email_stats and isinstance(email_stats, list) else 0
+        total_forms = len(form_stats) if form_stats and isinstance(form_stats, list) else 0
         
         # Email metrics
-        if email_stats:
+        if email_stats and isinstance(email_stats, list):
             total_sent = sum(email.get('stats', {}).get('sent', 0) for email in email_stats)
             total_opens = sum(email.get('stats', {}).get('opens', 0) for email in email_stats)
             total_clicks = sum(email.get('stats', {}).get('clicks', 0) for email in email_stats)
@@ -635,7 +672,7 @@ def create_comprehensive_summary_pdf_old(email_stats, form_stats, prospect_healt
             total_sent = total_opens = total_clicks = open_rate = click_rate = 0
         
         # Form metrics
-        if form_stats:
+        if form_stats and isinstance(form_stats, list):
             total_form_views = sum(form.get('views', 0) for form in form_stats)
             total_form_submissions = sum(form.get('submissions', 0) for form in form_stats)
             form_conversion_rate = (total_form_submissions / total_form_views * 100) if total_form_views > 0 else 0

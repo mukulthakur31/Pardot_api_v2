@@ -21,7 +21,21 @@ pdf_bp = Blueprint('pdf', __name__)
 @require_auth
 def download_pdf():
     try:
+        print(f"📄 [PDF] Starting PDF generation...")
         print(f"[PDF] Full Request JSON: {request.json}")
+        
+        # Add timeout protection (Windows compatible)
+        import threading
+        
+        timeout_occurred = threading.Event()
+        
+        def timeout_checker():
+            if timeout_occurred.wait(300):  # 5 minutes
+                return
+            raise TimeoutError("PDF generation timed out")
+        
+        timeout_thread = threading.Thread(target=timeout_checker, daemon=True)
+        timeout_thread.start()
         data_type = request.json.get("data_type", "emails")
         data = request.json.get("data")
         filters = request.json.get("filters", {})
@@ -104,19 +118,41 @@ def download_pdf():
         else:
             return jsonify({"error": "Invalid data type"}), 400
         
+        # Clear timeout
+        timeout_occurred.set()
+        
         return send_file(buffer, as_attachment=True, download_name=filename, mimetype="application/pdf")
+    except TimeoutError as e:
+        print(f"⏰ [ERROR] PDF Generation Timeout: {str(e)}")
+        timeout_occurred.set()
+        return jsonify({"error": "PDF generation timed out. Please try again."}), 408
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
-        print(f"[ERROR] PDF Generation Failed: {str(e)}")
+        print(f"❌ [ERROR] PDF Generation Failed: {str(e)}")
         print(f"[ERROR] Full traceback: {error_details}")
+        timeout_occurred.set()
         return jsonify({"error": str(e), "details": error_details}), 500
 
 @pdf_bp.route("/download-summary-pdf", methods=["POST"])
 @require_auth
 def download_summary_pdf():
     try:
-        print("Starting comprehensive PDF generation...")
+        print("🚀 Starting comprehensive PDF generation...")
+        
+        # Add request timeout protection (Windows compatible)
+        import threading
+        import time
+        
+        timeout_occurred = threading.Event()
+        
+        def timeout_checker():
+            if timeout_occurred.wait(600):  # 10 minutes
+                return
+            raise TimeoutError("PDF generation timed out")
+        
+        timeout_thread = threading.Thread(target=timeout_checker, daemon=True)
+        timeout_thread.start()
         
         # Fetch all data with timeout protection
         email_stats = None
@@ -187,11 +223,20 @@ def download_summary_pdf():
         )
         
         print("✅ PDF generated successfully")
+        
+        # Clear timeout
+        timeout_occurred.set()
+        
         return send_file(buffer, as_attachment=True, download_name="pardot_comprehensive_report.pdf", mimetype="application/pdf")
+    except TimeoutError as e:
+        print(f"⏰ PDF Generation Timeout: {str(e)}")
+        timeout_occurred.set()
+        return jsonify({"error": "PDF generation timed out. Please try again with a smaller date range."}), 408
     except Exception as e:
         import traceback
         print(f"❌ PDF Generation Error: {str(e)}")
         print(traceback.format_exc())
+        timeout_occurred.set()
         return jsonify({"error": str(e)}), 500
 
 @pdf_bp.route("/download-prospect-health-pdf", methods=["POST"])
