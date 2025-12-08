@@ -206,7 +206,7 @@ const Dashboard = () => {
           }}>P</div>
           <div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#00396B', margin: 0, lineHeight: 1 }}>
-              Pardot Analytics
+              Pardot Audit Engine
             </h1>
             <p style={{ fontSize: '0.75rem', color: '#706E6B', margin: 0, lineHeight: 1 }}>Marketing Intelligence</p>
           </div>
