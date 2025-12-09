@@ -188,22 +188,40 @@ const Dashboard = () => {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{ 
-            width: '40px', 
-            height: '40px', 
+            width: '48px', 
+            height: '48px', 
             background: 'linear-gradient(135deg, #00396B, #0176D3)', 
-            borderRadius: '8px',
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
-            fontSize: '1.25rem',
-            fontWeight: 'bold'
+            fontSize: '1.75rem',
+            fontWeight: '800',
+            boxShadow: '0 4px 12px rgba(1, 118, 211, 0.3)',
+            letterSpacing: '-0.02em'
           }}>P</div>
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#00396B', margin: 0, lineHeight: 1 }}>
-              Pardot Audit Engine
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <h1 style={{ 
+              fontSize: '2rem', 
+              fontWeight: '800', 
+              color: '#00396B', 
+              margin: 0, 
+              lineHeight: 1,
+              letterSpacing: '-0.02em'
+            }}>
+              Pardo<span style={{color:"#00A1E0", fontWeight: '800'}}>S</span>can
             </h1>
-            <p style={{ fontSize: '0.75rem', color: '#706E6B', margin: 0, lineHeight: 1 }}>Marketing Intelligence</p>
+            <p style={{ 
+              fontSize: '0.7rem', 
+              color: '#706E6B', 
+              margin: 0, 
+              lineHeight: 1,
+              marginTop: '0.25rem',
+              letterSpacing: '0.08em',
+              textAlign: 'center',
+              fontWeight: '500'
+            }}>Scan. Diagnose. Optimize.</p>
           </div>
         </div>
 
