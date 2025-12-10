@@ -12,7 +12,7 @@ REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
 REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
 
-# Initialize Redis client
+# Initialize Redis client with timeout protection
 try:
     redis_client = redis.Redis(
         host=REDIS_HOST,
@@ -20,9 +20,11 @@ try:
         decode_responses=True,
         username="default",
         password=REDIS_PASSWORD,
-
+        socket_timeout=5,
+        socket_connect_timeout=5,
+        retry_on_timeout=True
     )
-    # Test connection
+    # Test connection with timeout
     redis_client.ping()
     print("[OK] Redis connected successfully")
 except Exception as e:
@@ -30,23 +32,29 @@ except Exception as e:
     redis_client = None
 
 def get_cached_data(key: str) -> Optional[Any]:
-    """Get data from Redis cache"""
+    """Get data from Redis cache with timeout protection"""
     if not redis_client:
         return None
     try:
         data = redis_client.get(key)
         return json.loads(data) if data else None
+    except (redis.TimeoutError, redis.ConnectionError) as e:
+        print(f"Redis timeout/connection error for key {key}: {e}")
+        return None
     except Exception as e:
         print(f"Error getting cached data for key {key}: {e}")
         return None
 
 def set_cached_data(key: str, value: Any, ttl: int = 3600) -> bool:
-    """Set data in Redis cache with TTL (default 1 hour)"""
+    """Set data in Redis cache with TTL and timeout protection"""
     if not redis_client:
         return False
     try:
         redis_client.setex(key, ttl, json.dumps(value))
         return True
+    except (redis.TimeoutError, redis.ConnectionError) as e:
+        print(f"Redis timeout/connection error setting key {key}: {e}")
+        return False
     except Exception as e:
         print(f"Error setting cached data for key {key}: {e}")
         return False

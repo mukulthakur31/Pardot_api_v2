@@ -1,5 +1,6 @@
 import requests
 from config.settings import BUSINESS_UNIT_ID
+from cache import get_cached_data, set_cached_data
 
 def get_prospects_with_utm(headers):
     """Get prospects with UTM fields using nextPageUrl pagination"""
@@ -77,14 +78,28 @@ def get_utm_analysis(access_token):
         # Input validation
         if not access_token or len(access_token.strip()) == 0:
             raise ValueError("Invalid access token")
-            
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "Pardot-Business-Unit-Id": BUSINESS_UNIT_ID,
-            "Content-Type": "application/json"
-        }
         
-        prospects_data = get_prospects_with_utm(headers)
+        cache_key = f"utm_prospects:{access_token[:20]}"
+        
+        # Check cache first for prospects data
+        cached_prospects = get_cached_data(cache_key)
+        if cached_prospects:
+            print(f"📦 UTM PROSPECTS DATA: Retrieved from CACHE - Key: {cache_key}")
+            prospects_data = cached_prospects
+        else:
+            print(f"🌐 UTM PROSPECTS DATA: Fetching from API - Key: {cache_key}")
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Pardot-Business-Unit-Id": BUSINESS_UNIT_ID,
+                "Content-Type": "application/json"
+            }
+            
+            prospects_data = get_prospects_with_utm(headers)
+            
+            # Cache prospects data for 30 minutes
+            set_cached_data(cache_key, prospects_data, ttl=1800)
+            print(f"💾 UTM PROSPECTS DATA: Cached for 30 minutes - Key: {cache_key}")
+        
         audit_results = analyze_utm_parameters(prospects_data)
         
         return {

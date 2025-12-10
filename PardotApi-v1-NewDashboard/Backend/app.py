@@ -29,6 +29,7 @@ def create_app():
     from routes.utm_routes import utm_bp
     from routes.pdf_routes import pdf_bp
     from routes.google_routes import google_bp
+    from routes.database_health_routes import database_health_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(email_bp)
@@ -39,6 +40,7 @@ def create_app():
     app.register_blueprint(utm_bp)
     app.register_blueprint(pdf_bp)
     app.register_blueprint(google_bp)
+    app.register_blueprint(database_health_bp)
 
     return app
 

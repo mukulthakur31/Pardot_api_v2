@@ -49,6 +49,30 @@ def get_or_create_tab_cache(cache_key):
 @require_auth
 def get_prospect_health_route():
     try:
+        cache_key = f"prospects:{g.access_token[:20]}"
+        
+        # Check cache first
+        cached_data = get_cached_data(cache_key)
+        if cached_data:
+            print(f"📦 PROSPECT DATA: Retrieved from CACHE - Key: {cache_key}")
+            
+            # Calculate active prospects count from cached data
+            all_prospects = cached_data.get("all_prospects", [])
+            active_prospects = len([p for p in all_prospects if p.get('lastActivityAt')])
+            
+            response_data = {
+                "total_prospects": cached_data.get("total_prospects", 0),
+                "active_prospects": active_prospects,
+                "duplicate_count": cached_data.get("duplicates", {}).get("count", 0),
+                "inactive_count": cached_data.get("inactive_prospects", {}).get("count", 0),
+                "missing_fields_count": cached_data.get("missing_fields", {}).get("count", 0),
+                "scoring_issues_count": cached_data.get("scoring_issues", {}).get("count", 0),
+                "health_score": "Good" if cached_data.get("duplicates", {}).get("count", 0) == 0 else "Needs Attention"
+            }
+            return jsonify(response_data)
+        
+        # Fetch fresh data from API
+        print(f"🌐 PROSPECT DATA: Fetching from API - Key: {cache_key}")
         health_data = get_prospect_health(g.access_token)
         
         # Calculate active prospects count
@@ -65,7 +89,6 @@ def get_prospect_health_route():
             "health_score": "Good" if health_data.get("duplicates", {}).get("count", 0) == 0 else "Needs Attention"
         }
         
-        cache_key = f"prospects:{g.access_token[:20]}"
         # Clear tab cache for fresh data
         if cache_key in _tab_cache:
             del _tab_cache[cache_key]
@@ -74,9 +97,9 @@ def get_prospect_health_route():
         cache_success = set_cached_data(cache_key, health_data, ttl=1800)
         if not cache_success:
             _memory_cache[cache_key] = health_data
-            print(f"[DEBUG] Stored in memory cache: {cache_key}")
+            print(f"💾 PROSPECT DATA: Stored in memory cache - Key: {cache_key}")
         else:
-            print(f"[DEBUG] Stored in Redis cache: {cache_key}")
+            print(f"💾 PROSPECT DATA: Cached for 30 minutes - Key: {cache_key}")
         
         return jsonify(response_data)
     except Exception as e:
