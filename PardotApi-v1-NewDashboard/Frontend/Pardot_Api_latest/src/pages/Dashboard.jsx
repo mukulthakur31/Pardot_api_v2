@@ -289,8 +289,8 @@ const Dashboard = () => {
               background: '#E8F4FD',
               border: '1px solid #B8E6FF',
               color: '#00396B',
-              fontSize: '0.85rem',
-              fontWeight: '600'
+              fontSize: '0.9rem',
+              fontWeight: '700'
             }}>
               <div style={{
                 width: '8px',
@@ -315,8 +315,8 @@ const Dashboard = () => {
               padding: '0.5rem 1rem',
               borderRadius: '6px',
               cursor: 'pointer',
-              fontSize: '0.85rem',
-              fontWeight: '600',
+              fontSize: '0.9rem',
+              fontWeight: '700',
               transition: 'all 0.2s ease'
             }}
             onMouseOver={(e) => {
@@ -410,8 +410,8 @@ const Dashboard = () => {
                   background: generatingReport ? '#9CA3AF' : 'linear-gradient(135deg, #7C3AED, #A855F7)',
                   color: 'white',
                   cursor: generatingReport || !pardotConnected ? 'not-allowed' : 'pointer',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
+                  fontSize: '1rem',
+                  fontWeight: '700',
                   textAlign: 'center',
                   transition: 'all 0.2s ease',
                   boxShadow: '0 2px 4px rgba(124, 58, 237, 0.2)'
