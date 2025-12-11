@@ -411,7 +411,7 @@ const Dashboard = () => {
                   color: 'white',
                   cursor: generatingReport || !pardotConnected ? 'not-allowed' : 'pointer',
                   fontSize: '1rem',
-                  fontWeight: '700',
+                  fontWeight: '800',
                   textAlign: 'center',
                   transition: 'all 0.2s ease',
                   boxShadow: '0 2px 4px rgba(124, 58, 237, 0.2)'
