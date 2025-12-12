@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useGoogleAuth } from '../pages/Dashboard'
+
 import './EmailModule.css'
 
 const EmailModule = () => {

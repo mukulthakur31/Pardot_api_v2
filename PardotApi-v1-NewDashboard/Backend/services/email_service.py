@@ -17,6 +17,7 @@ def fetch_all_mails(access_token, fields="id,name,subject,createdAt"):
         params = {"fields": fields, "limit": 200}
         
         while url:
+            
             response = requests.get(url, headers=headers, params=params if url.endswith("list-emails") else None)
             
             if response.status_code != 200:
