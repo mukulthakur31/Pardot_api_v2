@@ -13,11 +13,12 @@ const EmailModule = () => {
     endDate: ''
   })
   const [error, setError] = useState('')
-  const { googleAuth, handleGoogleAuth } = useGoogleAuth()
+  const { googleAuth, handleGoogleAuth, startRequest, endRequest } = useGoogleAuth()
 
   const fetchEmailStats = async () => {
     setLoading(true)
     setError('')
+    startRequest() // Block navigation
     
     try {
       const params = new URLSearchParams()
@@ -43,6 +44,7 @@ const EmailModule = () => {
       setError('Error fetching email stats: ' + error.message)
     } finally {
       setLoading(false)
+      endRequest() // Re-enable navigation
     }
   }
 

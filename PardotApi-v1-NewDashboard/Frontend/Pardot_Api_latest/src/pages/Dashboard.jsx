@@ -18,6 +18,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true)
   const [generatingReport, setGeneratingReport] = useState(false)
   const [reportSuccess, setReportSuccess] = useState(false)
+  const [requestInProgress, setRequestInProgress] = useState(false)
+  const [requestTimeout, setRequestTimeout] = useState(null)
 
   const navigate = useNavigate()
   const location = useLocation()
@@ -159,13 +161,35 @@ const Dashboard = () => {
     }
   }
 
+  // Request management functions
+  const startRequest = () => {
+    setRequestInProgress(true)
+    // Set timeout to auto-cancel after 3 Min
+    const timeout = setTimeout(() => {
+      setRequestInProgress(false)
+      console.log('Request timeout - navigation enabled')
+    }, 1800000)
+    setRequestTimeout(timeout)
+  }
+
+  const endRequest = () => {
+    setRequestInProgress(false)
+    if (requestTimeout) {
+      clearTimeout(requestTimeout)
+      setRequestTimeout(null)
+    }
+  }
+
   // Context value
   const googleAuthValue = {
     googleAuth: googleConnected,
     loading,
     handleGoogleAuth,
     disconnectGoogle,
-    refreshAuthStatus: checkGoogleAuthStatus
+    refreshAuthStatus: checkGoogleAuthStatus,
+    requestInProgress,
+    startRequest,
+    endRequest
   }
 
   const modules = [
@@ -179,6 +203,14 @@ const Dashboard = () => {
 
   return (
     <GoogleAuthContext.Provider value={googleAuthValue}>
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
       <div style={{ minHeight: '100vh', background: '#F7F9FB' }}>
       {/* Header */}
       <header style={{
@@ -364,35 +396,49 @@ const Dashboard = () => {
             {modules.map(module => (
               <button
                 key={module.id}
-                onClick={() => navigate(module.path)}
+                onClick={() => !requestInProgress && navigate(module.path)}
+                disabled={requestInProgress}
                 style={{
                   width: '100%',
                   padding: '0.875rem 1rem',
                   margin: '0.25rem 0',
                   border: activeModule === module.id ? '1px solid #0176D3' : '1px solid transparent',
                   borderRadius: '6px',
-                  background: activeModule === module.id ? '#E8F4FD' : 'transparent',
-                  color: activeModule === module.id ? '#00396B' : '#706E6B',
-                  cursor: 'pointer',
+                  background: requestInProgress ? '#F3F4F6' : (activeModule === module.id ? '#E8F4FD' : 'transparent'),
+                  color: requestInProgress ? '#9CA3AF' : (activeModule === module.id ? '#00396B' : '#706E6B'),
+                  cursor: requestInProgress ? 'not-allowed' : 'pointer',
                   fontSize: '1rem',
                   fontWeight: '700',
                   textAlign: 'left',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  opacity: requestInProgress ? 0.6 : 1
                 }}
                 onMouseOver={(e) => {
-                  if (activeModule !== module.id) {
+                  if (activeModule !== module.id && !requestInProgress) {
                     e.target.style.background = '#F7F9FB'
                     e.target.style.color = '#00396B'
                   }
                 }}
                 onMouseOut={(e) => {
-                  if (activeModule !== module.id) {
+                  if (activeModule !== module.id && !requestInProgress) {
                     e.target.style.background = 'transparent'
                     e.target.style.color = '#706E6B'
                   }
                 }}
               >
                 {module.name}
+                {requestInProgress && activeModule === module.id && (
+                  <div style={{
+                    width: '12px',
+                    height: '12px',
+                    border: '2px solid #9CA3AF',
+                    borderTop: '2px solid #0176D3',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    display: 'inline-block',
+                    marginLeft: '0.5rem'
+                  }}></div>
+                )}
               </button>
             ))}
             
@@ -400,30 +446,31 @@ const Dashboard = () => {
             <div style={{ marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid #E5E5E5' }}>
               <button
                 onClick={generateFullReport}
-                disabled={generatingReport || !pardotConnected}
+                disabled={generatingReport || !pardotConnected || requestInProgress}
                 style={{
                   width: '100%',
                   padding: '0.875rem 1rem',
                   margin: '0.25rem 0',
                   border: 'none',
                   borderRadius: '8px',
-                  background: generatingReport ? '#9CA3AF' : 'linear-gradient(135deg, #7C3AED, #A855F7)',
+                  background: (generatingReport || requestInProgress) ? '#9CA3AF' : 'linear-gradient(135deg, #7C3AED, #A855F7)',
                   color: 'white',
-                  cursor: generatingReport || !pardotConnected ? 'not-allowed' : 'pointer',
+                  cursor: (generatingReport || !pardotConnected || requestInProgress) ? 'not-allowed' : 'pointer',
                   fontSize: '1rem',
                   fontWeight: '800',
                   textAlign: 'center',
                   transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 4px rgba(124, 58, 237, 0.2)'
+                  boxShadow: '0 2px 4px rgba(124, 58, 237, 0.2)',
+                  opacity: requestInProgress ? 0.6 : 1
                 }}
                 onMouseOver={(e) => {
-                  if (!generatingReport && pardotConnected) {
+                  if (!generatingReport && pardotConnected && !requestInProgress) {
                     e.target.style.transform = 'translateY(-1px)'
                     e.target.style.boxShadow = '0 4px 8px rgba(124, 58, 237, 0.3)'
                   }
                 }}
                 onMouseOut={(e) => {
-                  if (!generatingReport && pardotConnected) {
+                  if (!generatingReport && pardotConnected && !requestInProgress) {
                     e.target.style.transform = 'translateY(0px)'
                     e.target.style.boxShadow = '0 2px 4px rgba(124, 58, 237, 0.2)'
                   }
@@ -443,6 +490,8 @@ const Dashboard = () => {
                     }}></div>
                     Generating...
                   </>
+                ) : requestInProgress ? (
+                  '⏳ Request in Progress'
                 ) : (
                   '📊 Generate Full Report'
                 )}

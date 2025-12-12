@@ -30,11 +30,12 @@ const ProspectsModule = () => {
     pages: 0
   })
   const [exporting, setExporting] = useState({ sheets: false, pdf: false })
-  const { googleAuth, handleGoogleAuth } = useGoogleAuth()
+  const { googleAuth, handleGoogleAuth, startRequest, endRequest } = useGoogleAuth()
 
   const analyzeProspectHealth = async () => {
     setLoading(true)
     setError('')
+    startRequest() // Block navigation
     
     try {
       const response = await fetch('http://localhost:4001/get-prospect-health', {
@@ -53,6 +54,7 @@ const ProspectsModule = () => {
       setError('Error analyzing prospect health: ' + error.message)
     } finally {
       setLoading(false)
+      endRequest() // Re-enable navigation
     }
   }
 
