@@ -169,9 +169,10 @@ def _get_email_stats_internal(access_token, filter_start=None, filter_end=None):
         traceback.print_exc()
         return []
 def get_email_stats(access_token, filter_type=None, start_date=None, end_date=None):
+
+    
     """Main function to get email statistics with date filtering"""
-    try:
-        
+    try:        
         now = datetime.now(timezone.utc)
         
         if filter_type == "custom" and start_date and end_date:

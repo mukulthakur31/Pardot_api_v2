@@ -16,8 +16,94 @@ from services.database_health_service import get_database_health_stats
 from middleware.auth_middleware import require_auth
 from cache import get_cached_data, set_cached_data
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 pdf_bp = Blueprint('pdf', __name__)
+
+
+def fetch_email_stats(token):
+    email_cache_key = f"emails:{token[:20]}:all::"
+    data = get_cached_data(email_cache_key)
+    if data:
+        print("📦 EMAIL from cache")
+        return data
+
+    print("🌐 EMAIL from API")
+    data = get_email_stats(token)
+    if data:
+        set_cached_data(email_cache_key, data, ttl=1800)
+    return data
+
+
+def fetch_form_stats(token):
+    form_cache_key = f"forms:{token[:20]}:all::"
+    data = get_cached_data(form_cache_key)
+    if data:
+        print("📦 FORM from cache")
+        return data
+
+    print("🌐 FORM from API")
+    data = get_form_stats(token)
+    if data:
+        set_cached_data(form_cache_key, data, ttl=1800)
+    return data
+
+
+def fetch_database_health(token):
+    db_health_cache_key = f"database_health:{token[:20]}:all::"
+    data = get_cached_data(db_health_cache_key)
+    if data:
+        print("📦 DATABASE HEALTH from cache")
+        return data
+
+    print("🌐 DATABASE HEALTH from API")
+    data = get_database_health_stats(token)
+    if data:
+        set_cached_data(db_health_cache_key, data, ttl=3600)
+    return data
+
+
+def fetch_landing_page_stats(token):
+    lp_cache_key = f"landing_pages:{token[:20]}:all::"
+    data = get_cached_data(lp_cache_key)
+    if data:
+        print("📦 LANDING PAGE from cache")
+        return data
+
+    print("🌐 LANDING PAGE from API")
+    data = get_landing_page_stats(token)
+    if data:
+        set_cached_data(lp_cache_key, data, ttl=1800)
+    return data
+
+
+def fetch_engagement_programs(token):
+    engagement_cache_key = f"engagement_programs:{token[:20]}"
+    data = get_cached_data(engagement_cache_key)
+    if data:
+        print("📦 ENGAGEMENT from cache")
+        return data
+
+    print("🌐 ENGAGEMENT from API")
+    data = get_engagement_programs_analysis(token)
+    if data:
+        set_cached_data(engagement_cache_key, data, ttl=1800)
+    return data
+
+
+def fetch_utm_analysis(token):
+    utm_cache_key = f"utm_analysis:{token[:20]}"
+    data = get_cached_data(utm_cache_key)
+    if data:
+        print("📦 UTM from cache")
+        return data
+
+    print("🌐 UTM from API")
+    data = get_utm_analysis(token)
+    if data:
+        set_cached_data(utm_cache_key, data, ttl=1800)
+    return data
+
 
 @pdf_bp.route("/download-pdf", methods=["POST"])
 @require_auth
@@ -176,127 +262,48 @@ def download_summary_pdf():
         timeout_thread.start()
         
         # Fetch all data with timeout protection - Check cache first for each module
-        email_stats = None
-        form_stats = None
-        prospect_health = None
-        landing_page_stats = None
-        engagement_programs = None
-        utm_analysis = None
-        database_health = None
-        
-        # Email Stats - Check cache first
-        try:
-            email_cache_key = f"emails:{g.access_token[:20]}:all::"
-            email_stats = get_cached_data(email_cache_key)
-            if email_stats:
-                print(f"📦 EMAIL DATA: Retrieved from CACHE for PDF - Key: {email_cache_key}")
-            else:
-                print("🌐 EMAIL DATA: Fetching from API for PDF...")
-                email_stats = get_email_stats(g.access_token)
-                if email_stats:
-                    set_cached_data(email_cache_key, email_stats, ttl=1800)
-            print(f"✅ Email stats: {len(email_stats) if email_stats else 0} campaigns")
-        except Exception as e:
-            print(f"❌ Email stats failed: {str(e)}")
-        
-        # Form Stats - Check cache first
-        try:
-            form_cache_key = f"forms:{g.access_token[:20]}:all::"
-            form_stats = get_cached_data(form_cache_key)
-            if form_stats:
-                print(f"📦 FORM DATA: Retrieved from CACHE for PDF - Key: {form_cache_key}")
-            else:
-                print("🌐 FORM DATA: Fetching from API for PDF...")
-                form_stats = get_form_stats(g.access_token)
-                if form_stats:
-                    set_cached_data(form_cache_key, form_stats, ttl=1800)
-            print(f"✅ Form stats: {len(form_stats) if form_stats else 0} forms")
-        except Exception as e:
-            print(f"❌ Form stats failed: {str(e)}")
-        
-        # Database Health - Check cache first
-        try:
-            db_health_cache_key = f"database_health:{g.access_token[:20]}:all::"
-            database_health = get_cached_data(db_health_cache_key)
-            if database_health:
-                print(f"📦 DATABASE HEALTH: Retrieved from CACHE for PDF - Key: {db_health_cache_key}")
-            else:
-                print("🌐 DATABASE HEALTH: Fetching from API for PDF...")
-                database_health = get_database_health_stats(g.access_token)
-                if database_health:
-                    set_cached_data(db_health_cache_key, database_health, ttl=3600)
-            print("✅ Database health fetched")
-        except Exception as e:
-            print(f"❌ Database health failed: {str(e)}")
-            # Fallback to prospect health
-            try:
-                prospect_cache_key = f"prospects:{g.access_token[:20]}"
-                prospect_health = get_cached_data(prospect_cache_key)
-                if prospect_health:
-                    print(f"📦 PROSPECT HEALTH: Retrieved from CACHE for PDF - Key: {prospect_cache_key}")
-                else:
-                    print("🌐 PROSPECT HEALTH: Fetching from API for PDF...")
-                    prospect_health = get_prospect_health(g.access_token)
-                    if prospect_health:
-                        set_cached_data(prospect_cache_key, prospect_health, ttl=1800)
-                print("✅ Prospect health fetched")
-            except Exception as e2:
-                print(f"❌ Prospect health failed: {str(e2)}")
-        
-        # Landing Page Stats - Check cache first
-        try:
-            lp_cache_key = f"landing_pages:{g.access_token[:20]}:all::"
-            landing_page_stats = get_cached_data(lp_cache_key)
-            if landing_page_stats:
-                print(f"📦 LANDING PAGE DATA: Retrieved from CACHE for PDF - Key: {lp_cache_key}")
-            else:
-                print("🌐 LANDING PAGE DATA: Fetching from API for PDF...")
-                landing_page_stats = get_landing_page_stats(g.access_token)
-                if landing_page_stats:
-                    set_cached_data(lp_cache_key, landing_page_stats, ttl=1800)
-            print("✅ Landing page stats fetched")
-        except Exception as e:
-            print(f"❌ Landing page stats failed: {str(e)}")
-        
-        # Engagement Programs - Check cache first
-        try:
-            engagement_cache_key = f"engagement_programs:{g.access_token[:20]}"
-            engagement_programs = get_cached_data(engagement_cache_key)
-            if engagement_programs:
-                print(f"📦 ENGAGEMENT DATA: Retrieved from CACHE for PDF - Key: {engagement_cache_key}")
-            else:
-                print("🌐 ENGAGEMENT DATA: Fetching from API for PDF...")
-                engagement_programs = get_engagement_programs_analysis(g.access_token)
-                if engagement_programs:
-                    set_cached_data(engagement_cache_key, engagement_programs, ttl=1800)
-            print("✅ Engagement programs fetched")
-        except Exception as e:
-            print(f"❌ Engagement programs failed: {str(e)}")
-        
-        # UTM Analysis - Check cache first
-        try:
-            utm_cache_key = f"utm_analysis:{g.access_token[:20]}"
-            utm_analysis = get_cached_data(utm_cache_key)
-            if utm_analysis:
-                print(f"📦 UTM ANALYSIS: Retrieved from CACHE for PDF - Key: {utm_cache_key}")
-            else:
-                print("🌐 UTM ANALYSIS: Fetching from API for PDF...")
-                utm_analysis = get_utm_analysis(g.access_token)
-                if utm_analysis:
-                    set_cached_data(utm_cache_key, utm_analysis, ttl=1800)
-            print("✅ UTM analysis fetched")
-        except Exception as e:
-            print(f"❌ UTM analysis failed: {str(e)}")
-        
+        results ={
+            "email_stats" : None,
+            "form_stats" :None,
+            "prospect_health" :None,
+            "landing_page_stats" : None,
+            "engagement_programs" : None,
+            "utm_analysis" : None,
+            "database_health" : None
+        }
+
+
+        token = g.access_token 
+
+        with ThreadPoolExecutor(max_workers=6) as executor:
+           futures = {
+                executor.submit(fetch_email_stats, token): "email_stats",
+                executor.submit(fetch_form_stats, token): "form_stats",
+                executor.submit(fetch_database_health, token): "database_health",
+                executor.submit(fetch_landing_page_stats, token): "landing_page_stats",
+                executor.submit(fetch_engagement_programs, token): "engagement_programs",
+                executor.submit(fetch_utm_analysis, token): "utm_analysis",
+    }
+
         print("🔄 Generating comprehensive PDF...")
+        for future in as_completed(futures):
+              key = futures[future]
+        try:
+            results[key] = future.result()
+            print(f"✅ {key} fetched")
+        except Exception as e:
+            print(f"❌ {key} failed: {str(e)}")
+            results[key] = None
+
+
         buffer = create_comprehensive_audit_pdf(
-            email_stats, 
-            form_stats, 
-            prospect_health, 
-            landing_page_stats,
-            engagement_programs,
-            utm_analysis,
-            database_health
+           results["email_stats"],
+           results["form_stats"],
+           results["prospect_health"],      # optional / fallback
+           results["landing_page_stats"],
+           results["engagement_programs"],
+           results["utm_analysis"],
+           results["database_health"]
         )
         
         total_time = time.time() - start_time
