@@ -76,7 +76,6 @@ def fetch_landing_page_stats(token):
         set_cached_data(lp_cache_key, data, ttl=1800)
     return data
 
-
 def fetch_engagement_programs(token):
     engagement_cache_key = f"engagement_programs:{token[:20]}"
     data = get_cached_data(engagement_cache_key)
@@ -102,6 +101,20 @@ def fetch_utm_analysis(token):
     data = get_utm_analysis(token)
     if data:
         set_cached_data(utm_cache_key, data, ttl=1800)
+    return data
+
+
+def fetch_prospect_health(token):
+    prospect_cache_key = f"prospect_health:{token[:20]}:all::"
+    data = get_cached_data(prospect_cache_key)
+    if data:
+        print("📦 PROSPECT HEALTH from cache")
+        return data
+
+    print("🌐 PROSPECT HEALTH from API")
+    data = get_prospect_health(token)
+    if data:
+        set_cached_data(prospect_cache_key, data, ttl=3600)
     return data
 
 
@@ -262,48 +275,41 @@ def download_summary_pdf():
         timeout_thread.start()
         
         # Fetch all data with timeout protection - Check cache first for each module
-        results ={
-            "email_stats" : None,
-            "form_stats" :None,
-            "prospect_health" :None,
-            "landing_page_stats" : None,
-            "engagement_programs" : None,
-            "utm_analysis" : None,
-            "database_health" : None
+        results = {
+            "email_stats": None,
+            "form_stats": None,
+            "prospect_health": None,
+            "landing_page_stats": None,
+            "engagement_programs": None
         }
 
+        token = g.access_token
 
-        token = g.access_token 
-
-        with ThreadPoolExecutor(max_workers=6) as executor:
-           futures = {
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {
                 executor.submit(fetch_email_stats, token): "email_stats",
                 executor.submit(fetch_form_stats, token): "form_stats",
-                executor.submit(fetch_database_health, token): "database_health",
+                executor.submit(fetch_prospect_health, token): "prospect_health",
                 executor.submit(fetch_landing_page_stats, token): "landing_page_stats",
-                executor.submit(fetch_engagement_programs, token): "engagement_programs",
-                executor.submit(fetch_utm_analysis, token): "utm_analysis",
-    }
+                executor.submit(fetch_engagement_programs, token): "engagement_programs"
+            }
 
-        print("🔄 Generating comprehensive PDF...")
-        for future in as_completed(futures):
-              key = futures[future]
-        try:
-            results[key] = future.result()
-            print(f"✅ {key} fetched")
-        except Exception as e:
-            print(f"❌ {key} failed: {str(e)}")
-            results[key] = None
-
+            print("🔄 Generating comprehensive PDF...")
+            for future in as_completed(futures):
+                key = futures[future]
+                try:
+                    results[key] = future.result()
+                    print(f"✅ {key} fetched")
+                except Exception as e:
+                    print(f"❌ {key} failed: {str(e)}")
+                    results[key] = None
 
         buffer = create_comprehensive_audit_pdf(
-           results["email_stats"],
-           results["form_stats"],
-           results["prospect_health"],      # optional / fallback
-           results["landing_page_stats"],
-           results["engagement_programs"],
-           results["utm_analysis"],
-           results["database_health"]
+            results["email_stats"],
+            results["form_stats"],
+            results["prospect_health"],
+            results["landing_page_stats"],
+            results["engagement_programs"]
         )
         
         total_time = time.time() - start_time
