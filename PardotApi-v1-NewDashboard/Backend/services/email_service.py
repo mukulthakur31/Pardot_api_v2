@@ -17,6 +17,7 @@ def fetch_all_mails(access_token, fields="id,name,subject,createdAt"):
         params = {"fields": fields, "limit": 200}
         
         while url:
+            
             response = requests.get(url, headers=headers, params=params if url.endswith("list-emails") else None)
             
             if response.status_code != 200:
@@ -168,9 +169,10 @@ def _get_email_stats_internal(access_token, filter_start=None, filter_end=None):
         traceback.print_exc()
         return []
 def get_email_stats(access_token, filter_type=None, start_date=None, end_date=None):
+
+    
     """Main function to get email statistics with date filtering"""
-    try:
-        
+    try:        
         now = datetime.now(timezone.utc)
         
         if filter_type == "custom" and start_date and end_date:

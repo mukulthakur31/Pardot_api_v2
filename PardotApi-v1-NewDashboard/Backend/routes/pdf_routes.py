@@ -14,12 +14,114 @@ from services.engagement_service import get_engagement_programs_analysis
 from services.utm_service import get_utm_analysis
 from services.database_health_service import get_database_health_stats
 from middleware.auth_middleware import require_auth
+from cache import get_cached_data, set_cached_data
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 pdf_bp = Blueprint('pdf', __name__)
+
+
+def fetch_email_stats(token):
+    email_cache_key = f"emails:{token[:20]}:all::"
+    data = get_cached_data(email_cache_key)
+    if data:
+        print("📦 EMAIL from cache")
+        return data
+
+    print("🌐 EMAIL from API")
+    data = get_email_stats(token)
+    if data:
+        set_cached_data(email_cache_key, data, ttl=1800)
+    return data
+
+
+def fetch_form_stats(token):
+    form_cache_key = f"forms:{token[:20]}:all::"
+    data = get_cached_data(form_cache_key)
+    if data:
+        print("📦 FORM from cache")
+        return data
+
+    print("🌐 FORM from API")
+    data = get_form_stats(token)
+    if data:
+        set_cached_data(form_cache_key, data, ttl=1800)
+    return data
+
+
+def fetch_database_health(token):
+    db_health_cache_key = f"database_health:{token[:20]}:all::"
+    data = get_cached_data(db_health_cache_key)
+    if data:
+        print("📦 DATABASE HEALTH from cache")
+        return data
+
+    print("🌐 DATABASE HEALTH from API")
+    data = get_database_health_stats(token)
+    if data:
+        set_cached_data(db_health_cache_key, data, ttl=3600)
+    return data
+
+
+def fetch_landing_page_stats(token):
+    lp_cache_key = f"landing_pages:{token[:20]}:all::"
+    data = get_cached_data(lp_cache_key)
+    if data:
+        print("📦 LANDING PAGE from cache")
+        return data
+
+    print("🌐 LANDING PAGE from API")
+    data = get_landing_page_stats(token)
+    if data:
+        set_cached_data(lp_cache_key, data, ttl=1800)
+    return data
+
+def fetch_engagement_programs(token):
+    engagement_cache_key = f"engagement_programs:{token[:20]}"
+    data = get_cached_data(engagement_cache_key)
+    if data:
+        print("📦 ENGAGEMENT from cache")
+        return data
+
+    print("🌐 ENGAGEMENT from API")
+    data = get_engagement_programs_analysis(token)
+    if data:
+        set_cached_data(engagement_cache_key, data, ttl=1800)
+    return data
+
+
+def fetch_utm_analysis(token):
+    utm_cache_key = f"utm_analysis:{token[:20]}"
+    data = get_cached_data(utm_cache_key)
+    if data:
+        print("📦 UTM from cache")
+        return data
+
+    print("🌐 UTM from API")
+    data = get_utm_analysis(token)
+    if data:
+        set_cached_data(utm_cache_key, data, ttl=1800)
+    return data
+
+
+def fetch_prospect_health(token):
+    prospect_cache_key = f"prospect_health:{token[:20]}:all::"
+    data = get_cached_data(prospect_cache_key)
+    if data:
+        print("📦 PROSPECT HEALTH from cache")
+        return data
+
+    print("🌐 PROSPECT HEALTH from API")
+    data = get_prospect_health(token)
+    if data:
+        set_cached_data(prospect_cache_key, data, ttl=3600)
+    return data
+
 
 @pdf_bp.route("/download-pdf", methods=["POST"])
 @require_auth
 def download_pdf():
+    start_time = time.time()
     try:
         print(f"📄 [PDF] Starting PDF generation...")
         print(f"[PDF] Full Request JSON: {request.json}")
@@ -75,13 +177,21 @@ def download_pdf():
             sections = request.json.get("sections", default_sections)
             print(f"[PDF] Using sections for prospects: {sections}")
             
-            # Get filters if provided
+            # Get filters if provided - Check cache first
             if filters:
-                print(f"[PDF] Re-fetching data with filters: {filters}")
-                data = get_database_health_stats(g.access_token, 
-                                                filters.get("filter_type"), 
-                                                filters.get("start_date"), 
-                                                filters.get("end_date"))
+                filter_type = filters.get("filter_type")
+                start_date = filters.get("start_date")
+                end_date = filters.get("end_date")
+                filtered_cache_key = f"database_health:{g.access_token[:20]}:{filter_type or 'all'}:{start_date or ''}:{end_date or ''}"
+                
+                data = get_cached_data(filtered_cache_key)
+                if data:
+                    print(f"📦 FILTERED DATABASE HEALTH: Retrieved from CACHE for PDF - Key: {filtered_cache_key}")
+                else:
+                    print(f"🌐 FILTERED DATABASE HEALTH: Fetching from API for PDF - Key: {filtered_cache_key}")
+                    data = get_database_health_stats(g.access_token, filter_type, start_date, end_date)
+                    if data:
+                        set_cached_data(filtered_cache_key, data, ttl=3600)
             buffer = create_prospect_health_comprehensive_pdf(data, sections)
             filename = "prospect_health_comprehensive_report.pdf"
         elif data_type == "landing_pages":
@@ -106,13 +216,21 @@ def download_pdf():
             sections = request.json.get("sections", default_sections)
             print(f"[PDF] Using sections for database_health: {sections}")
             
-            # Get filters if provided
+            # Get filters if provided - Check cache first
             if filters:
-                print(f"[PDF] Re-fetching data with filters: {filters}")
-                data = get_database_health_stats(g.access_token, 
-                                                filters.get("filter_type"), 
-                                                filters.get("start_date"), 
-                                                filters.get("end_date"))
+                filter_type = filters.get("filter_type")
+                start_date = filters.get("start_date")
+                end_date = filters.get("end_date")
+                filtered_cache_key = f"prospect_health:{g.access_token[:20]}:{filter_type or 'all'}:{start_date or ''}:{end_date or ''}"
+                
+                data = get_cached_data(filtered_cache_key)
+                if data:
+                    print(f"📦 FILTERED PROSPECT HEALTH: Retrieved from CACHE for PDF - Key: {filtered_cache_key}")
+                else:
+                    print(f"🌐 FILTERED PROSPECT HEALTH: Fetching from API for PDF - Key: {filtered_cache_key}")
+                    data = get_database_health_stats(g.access_token, filter_type, start_date, end_date)
+                    if data:
+                        set_cached_data(filtered_cache_key, data, ttl=3600)
             buffer = create_prospect_health_comprehensive_pdf(data, sections)
             filename = "prospect_health_comprehensive_report.pdf"
         else:
@@ -121,6 +239,8 @@ def download_pdf():
         # Clear timeout
         timeout_occurred.set()
         
+        total_time = time.time() - start_time
+        print(f"⏱️ PDF Generated in {total_time:.2f} seconds")
         return send_file(buffer, as_attachment=True, download_name=filename, mimetype="application/pdf")
     except TimeoutError as e:
         print(f"⏰ [ERROR] PDF Generation Timeout: {str(e)}")
@@ -137,12 +257,12 @@ def download_pdf():
 @pdf_bp.route("/download-summary-pdf", methods=["POST"])
 @require_auth
 def download_summary_pdf():
+    start_time = time.time()
     try:
         print("🚀 Starting comprehensive PDF generation...")
         
         # Add request timeout protection (Windows compatible)
         import threading
-        import time
         
         timeout_occurred = threading.Event()
         
@@ -154,75 +274,46 @@ def download_summary_pdf():
         timeout_thread = threading.Thread(target=timeout_checker, daemon=True)
         timeout_thread.start()
         
-        # Fetch all data with timeout protection
-        email_stats = None
-        form_stats = None
-        prospect_health = None
-        landing_page_stats = None
-        engagement_programs = None
-        utm_analysis = None
-        database_health = None
-        
-        try:
-            print("Fetching email stats...")
-            email_stats = get_email_stats(g.access_token)
-            print(f"✅ Email stats: {len(email_stats) if email_stats else 0} campaigns")
-        except Exception as e:
-            print(f"❌ Email stats failed: {str(e)}")
-        
-        try:
-            print("Fetching form stats...")
-            form_stats = get_form_stats(g.access_token)
-            print(f"✅ Form stats: {len(form_stats) if form_stats else 0} forms")
-        except Exception as e:
-            print(f"❌ Form stats failed: {str(e)}")
-        
-        try:
-            print("Fetching database health stats...")
-            database_health = get_database_health_stats(g.access_token)
-            print("✅ Database health fetched")
-        except Exception as e:
-            print(f"❌ Database health failed: {str(e)}")
-            try:
-                print("Trying prospect health fallback...")
-                prospect_health = get_prospect_health(g.access_token)
-                print("✅ Prospect health fetched")
-            except Exception as e2:
-                print(f"❌ Prospect health failed: {str(e2)}")
-        
-        try:
-            print("Fetching landing page stats...")
-            landing_page_stats = get_landing_page_stats(g.access_token)
-            print("✅ Landing page stats fetched")
-        except Exception as e:
-            print(f"❌ Landing page stats failed: {str(e)}")
-        
-        try:
-            print("Fetching engagement programs...")
-            engagement_programs = get_engagement_programs_analysis(g.access_token)
-            print("✅ Engagement programs fetched")
-        except Exception as e:
-            print(f"❌ Engagement programs failed: {str(e)}")
-        
-        try:
-            print("Fetching UTM analysis...")
-            utm_analysis = get_utm_analysis(g.access_token)
-            print("✅ UTM analysis fetched")
-        except Exception as e:
-            print(f"❌ UTM analysis failed: {str(e)}")
-        
-        print("🔄 Generating comprehensive PDF...")
+        # Fetch all data with timeout protection - Check cache first for each module
+        results = {
+            "email_stats": None,
+            "form_stats": None,
+            "prospect_health": None,
+            "landing_page_stats": None,
+            "engagement_programs": None
+        }
+
+        token = g.access_token
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {
+                executor.submit(fetch_email_stats, token): "email_stats",
+                executor.submit(fetch_form_stats, token): "form_stats",
+                executor.submit(fetch_prospect_health, token): "prospect_health",
+                executor.submit(fetch_landing_page_stats, token): "landing_page_stats",
+                executor.submit(fetch_engagement_programs, token): "engagement_programs"
+            }
+
+            print("🔄 Generating comprehensive PDF...")
+            for future in as_completed(futures):
+                key = futures[future]
+                try:
+                    results[key] = future.result()
+                    print(f"✅ {key} fetched")
+                except Exception as e:
+                    print(f"❌ {key} failed: {str(e)}")
+                    results[key] = None
+
         buffer = create_comprehensive_audit_pdf(
-            email_stats, 
-            form_stats, 
-            prospect_health, 
-            landing_page_stats,
-            engagement_programs,
-            utm_analysis,
-            database_health
+            results["email_stats"],
+            results["form_stats"],
+            results["prospect_health"],
+            results["landing_page_stats"],
+            results["engagement_programs"]
         )
         
-        print("✅ PDF generated successfully")
+        total_time = time.time() - start_time
+        print(f"⏱️ Comprehensive PDF Generated in {total_time:.2f} seconds")
         
         # Clear timeout
         timeout_occurred.set()
@@ -242,6 +333,7 @@ def download_summary_pdf():
 @pdf_bp.route("/download-prospect-health-pdf", methods=["POST"])
 @require_auth
 def download_prospect_health_pdf():
+    start_time = time.time()
     try:
         # Get selected sections from request
         sections = request.json.get("sections", {
@@ -259,14 +351,28 @@ def download_prospect_health_pdf():
         start_date = filters.get("start_date")
         end_date = filters.get("end_date")
         
-        # Fetch prospect health data with filters
-        prospect_health_data = get_database_health_stats(g.access_token, filter_type, start_date, end_date)
+        # Fetch prospect health data with filters - Check cache first
+        cache_key = f"prospect_health:{g.access_token[:20]}:{filter_type or 'all'}:{start_date or ''}:{end_date or ''}"
+        prospect_health_data = get_cached_data(cache_key)
+        
+        if prospect_health_data:
+            print(f"📦 PROSPECT HEALTH PDF: Retrieved from CACHE - Key: {cache_key}")
+        else:
+            print(f"🌐 PROSPECT HEALTH PDF: Fetching from API - Key: {cache_key}")
+            prospect_health_data = get_database_health_stats(g.access_token, filter_type, start_date, end_date)
+            if prospect_health_data:
+                set_cached_data(cache_key, prospect_health_data, ttl=3600)
+                print(f"💾 PROSPECT HEALTH PDF: Cached for 1 hour - Key: {cache_key}")
         
         # Create PDF with selected sections and filtered data
         buffer = create_prospect_health_comprehensive_pdf(prospect_health_data, sections)
         
+        total_time = time.time() - start_time
+        print(f"⏱️ Prospect Health PDF Generated in {total_time:.2f} seconds")
         return send_file(buffer, as_attachment=True, download_name="prospect_health_report.pdf", mimetype="application/pdf")
     except Exception as e:
+        total_time = time.time() - start_time
+        print(f"❌ PDF Failed after {total_time:.2f} seconds: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @pdf_bp.route("/get-pdf-modal-options/<data_type>", methods=["GET"])

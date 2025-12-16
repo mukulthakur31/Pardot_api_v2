@@ -15,11 +15,12 @@ const FormsModule = () => {
     endDate: ''
   })
   const [error, setError] = useState('')
-  const { googleAuth, handleGoogleAuth } = useGoogleAuth()
+  const { googleAuth, handleGoogleAuth, startRequest, endRequest } = useGoogleAuth()
 
   const fetchFormStats = async () => {
     setLoading(true)
     setError('')
+    startRequest() // Block navigation
     
     try {
       const params = new URLSearchParams()
@@ -56,6 +57,7 @@ const FormsModule = () => {
       setError('Error fetching form stats: ' + error.message)
     } finally {
       setLoading(false)
+      endRequest() // Re-enable navigation
     }
   }
 

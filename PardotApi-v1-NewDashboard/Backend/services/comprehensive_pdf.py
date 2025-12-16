@@ -9,7 +9,7 @@ from reportlab.graphics.charts.piecharts import Pie
 from io import BytesIO
 from datetime import datetime
 
-def create_comprehensive_audit_pdf(email_stats, form_stats, prospect_health, landing_page_stats=None, engagement_programs=None, utm_analysis=None, database_health=None):
+def create_comprehensive_audit_pdf(email_stats, form_stats, prospect_health, landing_page_stats=None, engagement_programs=None):
     """Generate comprehensive full audit report with ALL details"""
     try:
         # Debug logging
@@ -18,7 +18,6 @@ def create_comprehensive_audit_pdf(email_stats, form_stats, prospect_health, lan
         print(f"🔍 PDF Debug - prospect_health type: {type(prospect_health)}, value: {prospect_health is not None}")
         print(f"🔍 PDF Debug - landing_page_stats type: {type(landing_page_stats)}, value: {landing_page_stats is not None}")
         print(f"🔍 PDF Debug - engagement_programs type: {type(engagement_programs)}, value: {engagement_programs is not None}")
-        print(f"🔍 PDF Debug - database_health type: {type(database_health)}, value: {database_health is not None}")
         buffer = BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch, leftMargin=0.6*inch, rightMargin=0.6*inch)
         
@@ -37,13 +36,8 @@ def create_comprehensive_audit_pdf(email_stats, form_stats, prospect_health, lan
         section_style = ParagraphStyle('Section', parent=styles['Heading2'], fontSize=16, spaceAfter=12, textColor=colors.HexColor('#dc2626'), fontName='Helvetica-Bold')
         content.append(Paragraph("📋 EXECUTIVE SUMMARY", section_style))
         
-        # Use database health data (new comprehensive prospect health) instead of old prospect health
-        total_prospects = 0
-        if database_health and database_health.get('summary', {}).get('total_database'):
-            total_prospects = database_health.get('summary', {}).get('total_database', 0)
-        elif prospect_health:
-            # Fallback to old prospect health if database health not available
-            total_prospects = prospect_health.get('total_prospects', 0)
+        # Use prospect health data for comprehensive audit (full data, no filters)
+        total_prospects = prospect_health.get('total_prospects', 0) if prospect_health else 0
         
         # Safe length calculations with detailed debugging
         print(f"🔍 Calculating email count...")
@@ -230,138 +224,8 @@ def create_comprehensive_audit_pdf(email_stats, form_stats, prospect_health, lan
         # COMPREHENSIVE DATABASE HEALTH AUDIT (REPLACES OLD PROSPECT HEALTH)
         content.append(Paragraph("📊 COMPREHENSIVE DATABASE HEALTH AUDIT", section_style))
         
-        if database_health:
-            # Active Contacts Section
-            if database_health.get('active_contacts'):
-                content.append(Paragraph("✅ ACTIVE CONTACTS ANALYSIS", ParagraphStyle('SubSection', parent=styles['Heading3'], fontSize=14, spaceAfter=10, textColor=colors.HexColor('#10b981'), fontName='Helvetica-Bold')))
-                
-                active_data = database_health.get('active_contacts', {}).get('table_data', [])
-                if active_data:
-                    table_data = [['Leads Created', '%age', 'Industry Standard', 'Count Till Jan 2025']]
-                    for row in active_data:
-                        table_data.append([
-                            row.get('metric', ''),
-                            row.get('percentage', ''),
-                            row.get('industry_standard', ''),
-                            f"{row.get('count', 0):,}"
-                        ])
-                    
-                    active_table = Table(table_data, colWidths=[2.2*inch, 1*inch, 1.3*inch, 1.5*inch])
-                    active_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10b981')),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, 0), 9),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
-                        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#ecfdf5')]),
-                        ('FONTSIZE', (0, 1), (-1, -1), 8),
-                        ('TOPPADDING', (0, 0), (-1, -1), 6),
-                        ('BOTTOMPADDING', (0, 0), (-1, -1), 6)
-                    ]))
-                    content.append(active_table)
-                    content.append(Spacer(1, 0.2*inch))
-            
-            # Inactive Contacts Section
-            if database_health.get('inactive_contacts'):
-                content.append(Paragraph("⚠️ INACTIVE CONTACTS ANALYSIS", ParagraphStyle('SubSection', parent=styles['Heading3'], fontSize=14, spaceAfter=10, textColor=colors.HexColor('#f59e0b'), fontName='Helvetica-Bold')))
-                
-                inactive_data = database_health.get('inactive_contacts', {}).get('table_data', [])
-                if inactive_data:
-                    table_data = [['Leads Created', '%age', 'Count']]
-                    for row in inactive_data:
-                        table_data.append([
-                            row.get('metric', ''),
-                            row.get('percentage', ''),
-                            f"{row.get('count', 0):,}"
-                        ])
-                    
-                    inactive_table = Table(table_data, colWidths=[3*inch, 1.5*inch, 1.5*inch])
-                    inactive_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f59e0b')),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, 0), 9),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
-                        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#fef3c7')]),
-                        ('FONTSIZE', (0, 1), (-1, -1), 8),
-                        ('TOPPADDING', (0, 0), (-1, -1), 6),
-                        ('BOTTOMPADDING', (0, 0), (-1, -1), 6)
-                    ]))
-                    content.append(inactive_table)
-                    content.append(Spacer(1, 0.2*inch))
-            
-            # Data Quality Section
-            if database_health.get('empty_details'):
-                content.append(Paragraph("🔍 DATA QUALITY ANALYSIS", ParagraphStyle('SubSection', parent=styles['Heading3'], fontSize=14, spaceAfter=10, textColor=colors.HexColor('#dc2626'), fontName='Helvetica-Bold')))
-                
-                empty_data = database_health.get('empty_details', {}).get('table_data', [])
-                if empty_data:
-                    table_data = [['Data Quality Metric', 'Count', '%age']]
-                    for row in empty_data:
-                        table_data.append([
-                            row.get('metric', ''),
-                            f"{row.get('count', 0):,}",
-                            row.get('percentage', '')
-                        ])
-                    
-                    empty_table = Table(table_data, colWidths=[3*inch, 1.5*inch, 1.5*inch])
-                    empty_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#dc2626')),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, 0), 9),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
-                        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#fee2e2')]),
-                        ('FONTSIZE', (0, 1), (-1, -1), 8),
-                        ('TOPPADDING', (0, 0), (-1, -1), 6),
-                        ('BOTTOMPADDING', (0, 0), (-1, -1), 6)
-                    ]))
-                    content.append(empty_table)
-                    content.append(Spacer(1, 0.2*inch))
-            
-            # Lead Scoring Section
-            if database_health.get('scoring_issues'):
-                content.append(Paragraph("⚡ LEAD SCORING ANALYSIS", ParagraphStyle('SubSection', parent=styles['Heading3'], fontSize=14, spaceAfter=10, textColor=colors.HexColor('#7c3aed'), fontName='Helvetica-Bold')))
-                
-                scoring_data = database_health.get('scoring_issues', {}).get('table_data', [])
-                if scoring_data:
-                    table_data = [['Scoring Issue', 'Count', '%age']]
-                    for row in scoring_data:
-                        table_data.append([
-                            row.get('metric', ''),
-                            f"{row.get('count', 0):,}",
-                            row.get('percentage', '')
-                        ])
-                    
-                    scoring_table = Table(table_data, colWidths=[3*inch, 1.5*inch, 1.5*inch])
-                    scoring_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#7c3aed')),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, 0), 9),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
-                        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f3e8ff')]),
-                        ('FONTSIZE', (0, 1), (-1, -1), 8),
-                        ('TOPPADDING', (0, 0), (-1, -1), 6),
-                        ('BOTTOMPADDING', (0, 0), (-1, -1), 6)
-                    ]))
-                    content.append(scoring_table)
-                    content.append(Spacer(1, 0.2*inch))
-            
-            # Charts
-            chart_data = database_health.get('chart_data', [])
-            if chart_data:
-                content.append(create_database_health_charts(chart_data))
-                content.append(Spacer(1, 0.2*inch))
-        elif prospect_health:
+       
+        if prospect_health:
             # Fallback to old prospect health if database health not available
             content.append(Paragraph("⚠️ Using Legacy Prospect Health Data", ParagraphStyle('Warning', parent=styles['Normal'], fontSize=11, spaceAfter=10, textColor=colors.HexColor('#f59e0b'), fontName='Helvetica-Bold')))
             

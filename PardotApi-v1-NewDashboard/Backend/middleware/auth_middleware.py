@@ -35,9 +35,7 @@ def require_auth(f):
             # Skip token reference check if token was refreshed
             if not actual_token.startswith(token_ref):
                 print("Token was refreshed, reference mismatch is expected")
-                # Update JWT with new token reference for future requests
-                # For now, just proceed with the refreshed token
-            
+                
             # Store token in g for route use
             g.access_token = actual_token
             
