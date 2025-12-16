@@ -30,10 +30,30 @@ class GoogleIntegration:
             scopes=self.scopes
         )
         flow.redirect_uri = self.redirect_uri
-        auth_url, _ = flow.authorization_url(prompt='consent')
-        return auth_url, flow
+        auth_url, state = flow.authorization_url(prompt='consent')
+        return auth_url, state
     
-    def get_credentials(self, code, flow):
+    def create_flow_from_state(self, state):
+        flow = Flow.from_client_config(
+            {
+                "web": {
+                    "client_id": self.client_id,
+                    "client_secret": self.client_secret,
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                    "redirect_uris": [self.redirect_uri]
+                }
+            },
+            scopes=self.scopes,
+            state=state
+        )
+        flow.redirect_uri = self.redirect_uri
+        return flow
+    
+    def get_credentials(self, code, state):
+        print("state is herr ", state)
+        flow = self.create_flow_from_state(state)
+        print("Flow is here",flow)
         flow.fetch_token(code=code)
         return flow.credentials
     

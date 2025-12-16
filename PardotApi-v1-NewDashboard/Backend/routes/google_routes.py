@@ -12,7 +12,8 @@ google_integration = GoogleIntegration(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
 @require_auth
 def google_auth():
     try:
-        auth_url, flow = google_integration.get_auth_url()
+        auth_url, state = google_integration.get_auth_url()
+        session['oauth_state'] = state
         print("entered in google auth")
         return jsonify({"auth_url": auth_url})
         
@@ -23,14 +24,16 @@ def google_auth():
 def google_callback():
     try:
         code = request.args.get('code')
-        print(code)
+        state = session.get('oauth_state')
+        
         if not code:
             return jsonify({"error": "No code received"}), 400
+        if not state:
+            return jsonify({"error": "Invalid session state"}), 400
         
-        _, flow = google_integration.get_auth_url()
-        credentials = google_integration.get_credentials(code, flow)
-        print(credentials)
+        credentials = google_integration.get_credentials(code, state)
         session['google_credentials'] = credentials.to_json()
+        session.pop('oauth_state', None)  # Clean up state
         
         return redirect('http://localhost:5173/dashboard?google_auth=success')
     except Exception as e:
