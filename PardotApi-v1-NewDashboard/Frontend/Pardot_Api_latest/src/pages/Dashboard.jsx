@@ -377,7 +377,9 @@ const Dashboard = () => {
           minHeight: 'calc(100vh - 81px)',
           padding: '1.5rem 1rem',
           borderRight: '1px solid #E5E5E5',
-          boxShadow: '1px 0 3px rgba(0,0,0,0.05)'
+          boxShadow: '1px 0 3px rgba(0,0,0,0.05)',
+          overflowY: 'auto',
+          overflowX: 'hidden'
         }}>
           <h3 style={{
             fontSize: '1.1rem',
@@ -533,7 +535,10 @@ const Dashboard = () => {
         <main style={{
           flex: 1,
           padding: '2rem',
-          background: '#F7F9FB'
+          background: '#F7F9FB',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          height: 'calc(100vh - 81px)'
         }}>
           <Outlet />
         </main>

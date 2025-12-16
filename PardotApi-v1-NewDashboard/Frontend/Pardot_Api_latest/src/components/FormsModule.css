@@ -1,14 +1,17 @@
 .forms-module {
   background: #ffffff;
   border-radius: 16px;
-  padding: 2rem;
+  padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  margin: 1rem 0;
+  margin: 0.5rem 0;
+  min-height: fit-content;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
 }
 
 .module-header {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
   border-bottom: 2px solid #f1f5f9;
 }
 
@@ -29,8 +32,8 @@
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
 }
 
 .filter-controls {
@@ -126,8 +129,8 @@
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
 }
 
 .summary-header {
@@ -267,7 +270,8 @@
 }
 
 .results-section {
-  margin-top: 2rem;
+  margin-top: 1rem;
+  flex-grow: 1;
 }
 
 .results-header {
@@ -287,6 +291,12 @@
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   border: 1px solid #e2e8f0;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.table-container::-webkit-scrollbar {
+  display: none; /* WebKit */
 }
 
 .forms-table {
@@ -478,6 +488,12 @@
   .tabs-container {
     overflow-x: auto;
     flex-wrap: nowrap;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+  
+  .tabs-container::-webkit-scrollbar {
+    display: none; /* WebKit */
   }
   
   .summary-grid {
@@ -492,6 +508,12 @@
   
   .table-container {
     overflow-x: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+  
+  .table-container::-webkit-scrollbar {
+    display: none; /* WebKit */
   }
   
   .forms-table {
