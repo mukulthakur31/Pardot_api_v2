@@ -1,7 +1,6 @@
 import requests
 import time
 from config.settings import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, SF_LOGIN_URL
-from cache import get_cached_data, set_cached_data
 
 class SalesforceAuthService:
     _instance = None
@@ -20,26 +19,17 @@ class SalesforceAuthService:
     def __init__(self):
         # Use class-level token_data to share across instances
         self.token_data = SalesforceAuthService._token_data
-        self.load_tokens_from_cache()
 
     def save_tokens(self, data):
         """Save access/refresh token with expiry timestamp."""
         self.token_data["access_token"] = data.get("access_token")
         self.token_data["refresh_token"] = data.get("refresh_token")
         self.token_data["expires_at"] = time.time() + int(data.get("expires_in", 3600))
-        # Cache tokens with 24 hour TTL
-        set_cached_data("sf_tokens", self.token_data, ttl=86400)
-    
-    def load_tokens_from_cache(self):
-        """Load tokens from Redis cache"""
-        cached_tokens = get_cached_data("sf_tokens")
-        if cached_tokens:
-            self.token_data.update(cached_tokens)
 
     def is_token_expired(self):
         if not self.token_data["expires_at"]:
             return True
-        return time.time() > self.token_data["expires_at"] - 60  # refresh 1 min early
+        return time.time() > self.token_data["expires_at"] - 300  # refresh 5 min early
 
     def exchange_code_for_token(self, code):
         url = f"{SF_LOGIN_URL}/services/oauth2/token"
@@ -60,8 +50,11 @@ class SalesforceAuthService:
         return token_data
 
     def refresh_access_token(self):
-        if not self.token_data["refresh_token"]:
-            raise Exception("No refresh token found")
+        print(f"Attempting token refresh. Refresh token exists: {bool(self.token_data.get('refresh_token'))}")
+        if not self.token_data.get("refresh_token"):
+            print("No refresh token found, clearing token data")
+            self.token_data = {"access_token": None, "refresh_token": None, "expires_at": None}
+            raise Exception("No refresh token found. Please re-authenticate.")
 
         url = f"{SF_LOGIN_URL}/services/oauth2/token"
 
@@ -73,14 +66,23 @@ class SalesforceAuthService:
         })
 
         if response.status_code != 200:
+            print(f"Token refresh failed: {response.text}")
+            self.token_data = {"access_token": None, "refresh_token": None, "expires_at": None}
             raise Exception(response.text)
 
         token_data = response.json()
+        # Preserve existing refresh token if not provided in response
+        if 'refresh_token' not in token_data and self.token_data.get('refresh_token'):
+            token_data['refresh_token'] = self.token_data['refresh_token']
         self.save_tokens(token_data)
         return token_data
 
     def get_valid_access_token(self):
         """Central method: always use this."""
         if self.is_token_expired():
+            print(f"🔄 TOKEN REFRESH: Token expired, refreshing automatically...")
             self.refresh_access_token()
+            print(f"✅ TOKEN REFRESH: Successfully refreshed token")
+        else:
+            print(f"✅ TOKEN VALID: Using existing token (expires in {int(self.token_data['expires_at'] - time.time())} seconds)")
         return self.token_data["access_token"]

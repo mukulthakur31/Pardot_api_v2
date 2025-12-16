@@ -63,6 +63,7 @@ def check_auth():
     """Check if user is authenticated"""
     return jsonify({"authenticated": True, "token_valid": True})
 
+
 @auth_bp.route("/auth-status")
 def auth_status():
     """Check authentication status without requiring auth"""
