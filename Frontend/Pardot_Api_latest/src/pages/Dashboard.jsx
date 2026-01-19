@@ -247,7 +247,7 @@ const Dashboard = () => {
               lineHeight: 1,
               letterSpacing: '-0.02em'
             }}>
-              Pardo<span style={{color:"#00A1E0", fontWeight: '800'}}>S</span>can
+              Pardot<span style={{color:"#00A1E0", fontWeight: '800'}}>S</span>can
             </h1>
             <p style={{ 
               fontSize: '0.7rem', 

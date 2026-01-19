@@ -20,7 +20,7 @@ const Home = () => {
                 <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm5-18v4h3V3h-3z" fill="#00396B"/>
               </svg>
             </div>
-            <h1 className="brand-title">Pardot Analytics</h1>
+            <h1 className="brand-title">Pardot Scan</h1>
             <p className="brand-subtitle">Comprehensive Marketing Analytics & Insights</p>
           </div>
           
